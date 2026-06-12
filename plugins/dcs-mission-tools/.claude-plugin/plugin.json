@@ -1,0 +1,11 @@
+{
+  "name": "dcs-mission-tools",
+  "displayName": "DCS Mission Tools",
+  "description": "Understand, lint and explain DCS World missions built on the VEAF mission template — covers vanilla DCS mission internals, MIST and VEAF-Mission-Creation-Tools",
+  "version": "0.1.0",
+  "author": {
+    "name": "Bullseye Francophone (BFR)"
+  },
+  "license": "MIT",
+  "keywords": ["dcs", "dcs-world", "mission", "veaf", "mist", "lua", "lint"]
+}
