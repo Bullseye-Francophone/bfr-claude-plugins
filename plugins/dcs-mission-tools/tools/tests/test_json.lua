@@ -1,0 +1,10 @@
+local t = require("helpers")
+local json = require("lib.json")
+
+t.eq("json: string escaping", json.encode('a"b\\c\nd'), '"a\\"b\\\\c\\nd"')
+t.eq("json: number", json.encode(42.5), "42.5")
+t.eq("json: booleans and nil", json.encode({true, false}), "[true,false]")
+t.eq("json: array", json.encode({1, 2, 3}), "[1,2,3]")
+t.eq("json: object sorted keys", json.encode({b = 1, a = 2}), '{"a":2,"b":1}')
+t.eq("json: nested", json.encode({x = {1, {y = "z"}}}), '{"x":[1,{"y":"z"}]}')
+t.eq("json: empty table is array", json.encode({}), "[]")
