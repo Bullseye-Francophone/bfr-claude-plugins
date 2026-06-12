@@ -23,3 +23,11 @@ for _, f in ipairs(findings) do
   end
 end
 t.eq("resources: exactly one missing file", missingFindings, 1)
+
+t.eq("resources: exactly six findings on broken fixture", #findings, 6)
+
+local orphanKeys = 0
+for _, f in ipairs(findings) do
+  if f.code == "RES-ORPHAN-KEY" then orphanKeys = orphanKeys + 1 end
+end
+t.eq("resources: both orphan keys reported", orphanKeys, 2)

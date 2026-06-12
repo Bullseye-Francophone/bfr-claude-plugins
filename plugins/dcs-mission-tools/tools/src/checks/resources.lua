@@ -7,6 +7,7 @@ local function normalizeForCompare(name)
   local normalized = name
   normalized = normalized:gsub("├®", "é"):gsub("├¿", "è"):gsub("├á", "à")
     :gsub("├¬", "ê"):gsub("├ç", "ç"):gsub("├┤", "ô"):gsub("├«", "î")
+    :gsub("├╣", "ù"):gsub("├╗", "û"):gsub("├»", "ï"):gsub("├╝", "ü"):gsub("├ó", "â")
   return normalized
 end
 
@@ -27,10 +28,13 @@ function M.run(project)
   end
 
   local referencedKeys = { dict = {}, resource = {} }
+  local reportedUndeclared = {}
   for _, ref in ipairs(refs) do
     referencedKeys[ref.namespace][ref.key] = true
     local table_ = ref.namespace == "dict" and project.dictionary or project.mapResource
-    if table_[ref.key] == nil then
+    local dedupeKey = ref.namespace .. ":" .. ref.key
+    if table_[ref.key] == nil and not reportedUndeclared[dedupeKey] then
+      reportedUndeclared[dedupeKey] = true
       add("error", "RES-UNDECLARED-KEY",
         ref.key .. " is referenced (" .. ref.where .. ") but not declared in " ..
         (ref.namespace == "dict" and "dictionary" or "mapResource"),
