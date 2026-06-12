@@ -5,7 +5,7 @@ local findingsLib = require("lib.findings")
 local M = { name = "loading", layer = "vmct" }
 
 local function findTrigAction(trig, marker)
-  for index, chunk in pairs(trig.actions or {}) do
+  for index, chunk in ipairs(trig.actions or {}) do
     if type(chunk) == "string" and chunk:find(marker, 1, true) then
       return index, chunk
     end
@@ -79,7 +79,7 @@ function M.run(project)
   for _, keySuffix in ipairs({ "10501", "10502" }) do
     local key = "DictKey_ActionText_" .. keySuffix
     local value = project.dictionary[key]
-    if type(value) == "string" and not value:match("^return%s+false%s") then
+    if type(value) == "string" and not value:match("^return%s+false%f[%s\0]") then
       add("warning", "LOAD-COMMITTED-STATE",
         key .. " is '" .. value .. "' — committed missions should be in static state " ..
         "('return false ...'); this looks like an un-extracted build artifact",
