@@ -51,7 +51,7 @@ function M.run(project)
         "src/mission/mission")
     end
     local rule = trigrules[index]
-    if rule then
+    if rule and inStartup ~= inTick then
       local isStart = rule.predicate == "triggerStart"
       if isStart and inTick then
         add("error", "TRG-STARTUP-COVERAGE",
