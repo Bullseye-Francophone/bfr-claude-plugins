@@ -6,6 +6,7 @@
   "author": {
     "name": "Bullseye Francophone (BFR)"
   },
+  "repository": "https://github.com/Bullseye-Francophone/bfr-claude-plugins",
   "license": "MIT",
   "keywords": ["dcs", "dcs-world", "mission", "veaf", "mist", "lua", "lint"]
 }

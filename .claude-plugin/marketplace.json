@@ -9,7 +9,7 @@
       "name": "dcs-mission-tools",
       "source": "./plugins/dcs-mission-tools",
       "description": "Understand, lint and explain DCS World missions built on the VEAF mission template",
-      "tags": ["dcs", "dcs-world", "mission", "veaf", "mist", "lua"]
+      "tags": ["dcs", "dcs-world", "mission", "veaf", "mist", "lua", "lint"]
     }
   ]
 }

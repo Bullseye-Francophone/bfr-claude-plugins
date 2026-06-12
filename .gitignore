@@ -1,4 +1,5 @@
 .DS_Store
 *.tar.gz
 lua-5.4.*/
-node_modules/
+/node_modules/
+plugins/*/node_modules/

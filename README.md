@@ -9,6 +9,7 @@ Claude Code plugin marketplace by Bullseye Francophone (BFR), for DCS World miss
 ## Install
 
 ```
-/plugin marketplace add <this-repo-url>
+/plugin marketplace add https://github.com/Bullseye-Francophone/bfr-claude-plugins
 /plugin install dcs-mission-tools@bfr
 ```
+
