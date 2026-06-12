@@ -17,7 +17,7 @@ end
 
 function M.isDir(path)
   if M.isWindows then
-    local proc = io.popen('if exist ' .. quoted(path) .. '\\* (echo yes) else (echo no)')
+    local proc = io.popen('if exist ' .. quoted(path .. '\\*') .. ' (echo yes) else (echo no)')
     local out = proc:read("*l")
     proc:close()
     return out == "yes"
