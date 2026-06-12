@@ -32,3 +32,20 @@ local bothProject = { mission = {
 local bothFindings = triggers.run(bothProject)
 t.eq("triggers: index in both tables yields exactly one finding", #bothFindings, 1)
 t.eq("triggers: that finding is startup-coverage", bothFindings[1].code, "TRG-STARTUP-COVERAGE")
+
+local multilineProject = { mission = {
+  trig = {
+    actions = { [1] = "a_do_script(\"local a = 1\\\nlocal b = 2\");" },
+    conditions = { [1] = "return(true)" },
+    flag = { [1] = true },
+    funcStartup = { [1] = "if mission.trig.conditions[1]() then mission.trig.actions[1]() end" },
+    func = { },
+  },
+  trigrules = { [1] = {
+    predicate = "triggerStart",
+    actions = { [1] = { predicate = "a_do_script", text = "local a = 1\nlocal b = 2" } },
+    rules = { },
+  } },
+} }
+t.eq("triggers: multiline do_script payload recompiles cleanly",
+  triggers.run(multilineProject), {})

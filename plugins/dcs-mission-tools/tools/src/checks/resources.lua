@@ -43,6 +43,7 @@ function M.run(project)
   end
 
   local declaredFiles = {}
+  local vmctNotInstalledCount = 0
   for key, fileName in pairs(project.mapResource) do
     declaredFiles[fileName] = true
     if not referencedKeys.resource[key] then
@@ -50,25 +51,38 @@ function M.run(project)
         key .. " is declared in mapResource but never referenced", "l10n/DEFAULT/mapResource")
     end
     if not project.l10nFiles[fileName] and not isInjected(fileName) then
-      local matched = false
-      for onDisk in pairs(project.l10nFiles) do
-        if normalizeForCompare(onDisk) == normalizeForCompare(fileName)
-           and onDisk ~= fileName then
-          add("error", "RES-ENCODING",
-            key .. " declares '" .. fileName .. "' but the file on disk is named '" ..
-            onDisk .. "' (encoding mismatch, briefing/sound will break at build)",
-            "l10n/DEFAULT/" .. onDisk)
-          matched = true
-          break
+      local isLuaFile = fileName:match("%.lua$") ~= nil
+      local vmctNotInstalled = isLuaFile
+        and project.hasVmctMarkers
+        and next(project.communityScripts) == nil
+      if vmctNotInstalled then
+        vmctNotInstalledCount = vmctNotInstalledCount + 1
+      else
+        local matched = false
+        for onDisk in pairs(project.l10nFiles) do
+          if normalizeForCompare(onDisk) == normalizeForCompare(fileName)
+             and onDisk ~= fileName then
+            add("error", "RES-ENCODING",
+              key .. " declares '" .. fileName .. "' but the file on disk is named '" ..
+              onDisk .. "' (encoding mismatch, briefing/sound will break at build)",
+              "l10n/DEFAULT/" .. onDisk)
+            matched = true
+            break
+          end
+        end
+        if not matched then
+          add("error", "RES-MISSING-FILE",
+            key .. " declares '" .. fileName ..
+            "' but no such file exists in l10n/DEFAULT nor in the build-injected script set",
+            "l10n/DEFAULT/mapResource")
         end
       end
-      if not matched then
-        add("error", "RES-MISSING-FILE",
-          key .. " declares '" .. fileName ..
-          "' but no such file exists in l10n/DEFAULT nor in the build-injected script set",
-          "l10n/DEFAULT/mapResource")
-      end
     end
+  end
+  if vmctNotInstalledCount > 0 then
+    add("warning", "RES-VMCT-NOT-INSTALLED",
+      vmctNotInstalledCount .. " declared script(s) could not be verified because the VMCT npm package is not installed — run npm/yarn install in the mission project to vendor community scripts",
+      "node_modules/veaf-mission-creation-tools")
   end
 
   for key in pairs(project.dictionary) do

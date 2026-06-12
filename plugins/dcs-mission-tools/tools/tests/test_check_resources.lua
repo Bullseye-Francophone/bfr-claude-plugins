@@ -31,3 +31,23 @@ for _, f in ipairs(findings) do
   if f.code == "RES-ORPHAN-KEY" then orphanKeys = orphanKeys + 1 end
 end
 t.eq("resources: both orphan keys reported", orphanKeys, 2)
+
+local notInstalledProject = {
+  root = "/tmp/fake", missionDir = "/tmp/fake/src/mission", l10nDir = "/tmp/fake/src/mission/l10n/DEFAULT",
+  mission = { trig = { actions = { [1] = "a_do_script_file(getValueResourceByKey(\"DictKey_ActionText_10202\"));a_out_sound_c(89, getValueResourceByKey(\"DictKey_ActionText_10401\"), 0);" }, conditions = {} } },
+  dictionary = {},
+  mapResource = { ["DictKey_ActionText_10202"] = "mist.lua", ["DictKey_ActionText_10401"] = "beacon.ogg" },
+  theatre = "Caucasus", l10nFiles = {}, scriptFiles = {}, scriptText = "",
+  communityScripts = {}, hasVmctMarkers = true,
+}
+local notInstalled = resources.run(notInstalledProject)
+t.hasFinding("resources: not-installed yields aggregate warning", notInstalled, "RES-VMCT-NOT-INSTALLED")
+t.hasNoFinding("resources: lua scripts not flagged missing when vmct absent", notInstalled, "RES-MISSING-FILE-mist")
+local missingOgg = 0
+for _, f in ipairs(notInstalled) do
+  if f.code == "RES-MISSING-FILE" then
+    missingOgg = missingOgg + 1
+    t.contains("resources: ogg still flagged missing", f.message, "beacon.ogg")
+  end
+end
+t.eq("resources: exactly one missing-file for the ogg", missingOgg, 1)

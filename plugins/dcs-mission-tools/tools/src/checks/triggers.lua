@@ -10,7 +10,7 @@ end
 
 local function compileFragment(action)
   if action.predicate == "a_do_script" and type(action.text) == "string" then
-    local escaped = action.text:gsub("\\", "\\\\"):gsub('"', '\\"')
+    local escaped = action.text:gsub("\\", "\\\\"):gsub('"', '\\"'):gsub("\n", "\\\n")
     return 'a_do_script("' .. escaped .. '");'
   end
   if action.predicate == "a_do_script_file" and type(action.file) == "string" then
