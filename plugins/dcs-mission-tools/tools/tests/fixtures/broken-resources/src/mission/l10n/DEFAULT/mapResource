@@ -1,0 +1,10 @@
+mapResource = {
+    ["DictKey_ActionText_10202"] = "mist.lua",
+    ["DictKey_ActionText_10203"] = "CTLD.lua",
+    ["DictKey_ActionText_10308"] = "veaf-scripts.lua",
+    ["DictKey_ActionText_10309"] = "missionConfig.lua",
+    ["DictKey_ActionText_10401"] = "beacon.ogg",
+    ["ResKey_ImageBriefing_1"] = "briefing.png",
+    ["ResKey_ImageBriefing_2"] = "photo-écran.png",
+    ["ResKey_Unused_9"] = "briefing.png",
+}
