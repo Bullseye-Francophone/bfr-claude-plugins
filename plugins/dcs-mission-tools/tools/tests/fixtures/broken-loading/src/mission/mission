@@ -1,0 +1,213 @@
+mission = {
+    ["coalition"] = {
+        ["blue"] = {
+            ["bullseye"] = { ["x"] = 0, ["y"] = 0 },
+            ["country"] = {
+                [1] = {
+                    ["id"] = 2,
+                    ["name"] = "USA",
+                    ["vehicle"] = {
+                        ["group"] = {
+                            [1] = {
+                                ["groupId"] = 1,
+                                ["name"] = "Ground-Alpha",
+                                ["task"] = "Ground Nothing",
+                                ["units"] = {
+                                    [1] = { ["heading"] = 0, ["name"] = "Ground-Alpha-1", ["skill"] = "Average", ["type"] = "M-113", ["unitId"] = 1, ["x"] = 1000, ["y"] = 2000 },
+                                },
+                                ["x"] = 1000,
+                                ["y"] = 2000,
+                            },
+                        },
+                    },
+                },
+            },
+        },
+        ["neutrals"] = { ["bullseye"] = { ["x"] = 0, ["y"] = 0 }, ["country"] = { } },
+        ["red"] = { ["bullseye"] = { ["x"] = 0, ["y"] = 0 }, ["country"] = { } },
+    },
+    ["descriptionText"] = "DictKey_descriptionText_1",
+    ["pictureFileNameB"] = {
+        [1] = "ResKey_ImageBriefing_1",
+    },
+    ["requiredModules"] = {
+        ["Hercules"] = "Hercules",
+    },
+    ["sortie"] = "DictKey_sortie_2",
+    ["theatre"] = "Caucasus",
+    ["trig"] = {
+        ["actions"] = {
+            [1] = "a_do_script(\"VEAF_DYNAMIC_PATH = [[C:\\\\Missions\\\\clean\\\\node_modules\\\\veaf-mission-creation-tools\\\\]]\");",
+            [2] = "a_do_script(\"VEAF_DYNAMIC_MISSIONPATH = [[C:\\\\Missions\\\\clean\\\\]]\");",
+            [3] = "a_do_script(\"env.info(\\\"DYNAMIC SCRIPTS LOADING\\\")\");a_do_script(\"assert(loadfile(VEAF_DYNAMIC_PATH .. \\\"/src/scripts/community/mist.lua\\\"))()\");a_do_script(\"assert(loadfile(VEAF_DYNAMIC_PATH .. \\\"/src/scripts/VeafDynamicLoader.lua\\\"))()\");",
+            [4] = "a_do_script(\"env.info(\\\"STATIC SCRIPTS LOADING\\\")\");a_do_script_file(getValueResourceByKey(\"DictKey_ActionText_10203\"));a_do_script_file(getValueResourceByKey(\"DictKey_ActionText_10202\"));a_do_script_file(getValueResourceByKey(\"DictKey_ActionText_10308\"));",
+            [5] = "a_do_script(\"env.info(\\\"DYNAMIC CONFIG LOADING\\\")\");a_do_script(\"assert(loadfile(VEAF_DYNAMIC_MISSIONPATH .. \\\"/src/scripts/missionConfig.lua\\\"))()\");",
+            [6] = "a_do_script(\"env.info(\\\"STATIC CONFIG LOADING\\\")\");a_do_script_file(getValueResourceByKey(\"DictKey_ActionText_10309\"));",
+            [7] = "a_set_flag(\"Zone-Alpha-Active\");a_do_script(\"veafCombatZone.ActivateZone(\\\"combatZone_Alpha\\\")\");",
+        },
+        ["conditions"] = {
+            [1] = "return(c_predicate(getValueDictByKey(\"DictKey_ActionText_10501\")) )",
+            [2] = "return(c_predicate(getValueDictByKey(\"DictKey_ActionText_10502\")) )",
+            [3] = "return(c_predicate(getValueDictByKey(\"DictKey_ActionText_10601\")) )",
+            [4] = "return(c_predicate(getValueDictByKey(\"DictKey_ActionText_10701\")) )",
+            [5] = "return(c_predicate(getValueDictByKey(\"DictKey_ActionText_10801\")) )",
+            [6] = "return(c_predicate(getValueDictByKey(\"DictKey_ActionText_10901\")) )",
+            [7] = "return(c_flag_is_true(\"Start-Zone-Alpha\") )",
+        },
+        ["custom"] = {
+        },
+        ["customStartup"] = {
+        },
+        ["events"] = {
+        },
+        ["flag"] = {
+            [1] = true,
+            [2] = true,
+            [3] = true,
+            [4] = true,
+            [5] = true,
+            [6] = true,
+            [7] = true,
+        },
+        ["func"] = {
+            [7] = "if mission.trig.conditions[7]() then mission.trig.actions[7]() end",
+        },
+        ["funcStartup"] = {
+            [1] = "if mission.trig.conditions[1]() then mission.trig.actions[1]() end",
+            [2] = "if mission.trig.conditions[2]() then mission.trig.actions[2]() end",
+            [3] = "if mission.trig.conditions[3]() then mission.trig.actions[3]() end",
+            [4] = "if mission.trig.conditions[4]() then mission.trig.actions[4]() end",
+            [5] = "if mission.trig.conditions[5]() then mission.trig.actions[5]() end",
+            [6] = "if mission.trig.conditions[6]() then mission.trig.actions[6]() end",
+        },
+    },
+    ["triggers"] = {
+        ["zones"] = {
+            [1] = {
+                ["color"] = { [1] = 1, [2] = 0, [3] = 0, [4] = 0.15 },
+                ["hidden"] = false,
+                ["name"] = "combatZone_Alpha",
+                ["properties"] = { },
+                ["radius"] = 3000,
+                ["type"] = 0,
+                ["x"] = -291014,
+                ["y"] = 617414,
+                ["zoneId"] = 100,
+            },
+            [2] = {
+                ["color"] = { [1] = 0, [2] = 1, [3] = 0, [4] = 0.15 },
+                ["hidden"] = false,
+                ["name"] = "combatZone_Bravo",
+                ["properties"] = { },
+                ["radius"] = 0,
+                ["type"] = 2,
+                ["verticies"] = {
+                    [1] = { ["x"] = -290000, ["y"] = 618000 },
+                    [2] = { ["x"] = -290000, ["y"] = 619000 },
+                    [3] = { ["x"] = -291000, ["y"] = 619000 },
+                    [4] = { ["x"] = -291000, ["y"] = 618000 },
+                },
+                ["x"] = -290500,
+                ["y"] = 618500,
+                ["zoneId"] = 101,
+            },
+        },
+    },
+    ["trigrules"] = {
+        [1] = {
+            ["actions"] = {
+                [1] = { ["predicate"] = "a_do_script", ["text"] = "VEAF_DYNAMIC_PATH = [[C:\\Missions\\clean\\node_modules\\veaf-mission-creation-tools\\]]" },
+            },
+            ["colorItem"] = "0x00ffffff",
+            ["comment"] = "choose scripts loading method (false = static, true = dynamic)",
+            ["eventlist"] = "",
+            ["predicate"] = "triggerStart",
+            ["rules"] = {
+                [1] = { ["KeyDict_text"] = "DictKey_ActionText_10501", ["flag"] = 1, ["predicate"] = "c_predicate", ["text"] = "DictKey_ActionText_10501" },
+            },
+        },
+        [2] = {
+            ["actions"] = {
+                [1] = { ["predicate"] = "a_do_script", ["text"] = "VEAF_DYNAMIC_MISSIONPATH = [[C:\\Missions\\clean\\]]" },
+            },
+            ["colorItem"] = "0x00ffffff",
+            ["comment"] = "choose config loading method (false = static, true = dynamic)",
+            ["eventlist"] = "",
+            ["predicate"] = "triggerStart",
+            ["rules"] = {
+                [1] = { ["KeyDict_text"] = "DictKey_ActionText_10502", ["flag"] = 1, ["predicate"] = "c_predicate", ["text"] = "DictKey_ActionText_10502" },
+            },
+        },
+        [3] = {
+            ["actions"] = {
+                [1] = { ["predicate"] = "a_do_script", ["text"] = "env.info(\"DYNAMIC SCRIPTS LOADING\")" },
+                [2] = { ["predicate"] = "a_do_script", ["text"] = "assert(loadfile(VEAF_DYNAMIC_PATH .. \"/src/scripts/community/mist.lua\"))()" },
+                [3] = { ["predicate"] = "a_do_script", ["text"] = "assert(loadfile(VEAF_DYNAMIC_PATH .. \"/src/scripts/VeafDynamicLoader.lua\"))()" },
+            },
+            ["colorItem"] = "0x00ff80ff",
+            ["comment"] = "mission start - dynamic",
+            ["eventlist"] = "",
+            ["predicate"] = "triggerStart",
+            ["rules"] = {
+                [1] = { ["KeyDict_text"] = "DictKey_ActionText_10601", ["flag"] = 1, ["predicate"] = "c_predicate", ["text"] = "DictKey_ActionText_10601" },
+            },
+        },
+        [4] = {
+            ["actions"] = {
+                [1] = { ["predicate"] = "a_do_script", ["text"] = "env.info(\"STATIC SCRIPTS LOADING\")" },
+                [2] = { ["file"] = "DictKey_ActionText_10203", ["predicate"] = "a_do_script_file" },
+                [3] = { ["file"] = "DictKey_ActionText_10202", ["predicate"] = "a_do_script_file" },
+                [4] = { ["file"] = "DictKey_ActionText_10308", ["predicate"] = "a_do_script_file" },
+            },
+            ["colorItem"] = "0x00ff80ff",
+            ["comment"] = "mission start - static",
+            ["eventlist"] = "",
+            ["predicate"] = "triggerStart",
+            ["rules"] = {
+                [1] = { ["KeyDict_text"] = "DictKey_ActionText_10701", ["flag"] = 1, ["predicate"] = "c_predicate", ["text"] = "DictKey_ActionText_10701" },
+            },
+        },
+        [5] = {
+            ["actions"] = {
+                [1] = { ["predicate"] = "a_do_script", ["text"] = "env.info(\"DYNAMIC CONFIG LOADING\")" },
+                [2] = { ["predicate"] = "a_do_script", ["text"] = "assert(loadfile(VEAF_DYNAMIC_MISSIONPATH .. \"/src/scripts/missionConfig.lua\"))()" },
+            },
+            ["colorItem"] = "0x00ff80ff",
+            ["comment"] = "mission config - dynamic",
+            ["eventlist"] = "",
+            ["predicate"] = "triggerStart",
+            ["rules"] = {
+                [1] = { ["KeyDict_text"] = "DictKey_ActionText_10801", ["flag"] = 1, ["predicate"] = "c_predicate", ["text"] = "DictKey_ActionText_10801" },
+            },
+        },
+        [6] = {
+            ["actions"] = {
+                [1] = { ["predicate"] = "a_do_script", ["text"] = "env.info(\"STATIC CONFIG LOADING\")" },
+                [2] = { ["file"] = "DictKey_ActionText_10309", ["predicate"] = "a_do_script_file" },
+            },
+            ["colorItem"] = "0x00ff80ff",
+            ["comment"] = "mission config - static",
+            ["eventlist"] = "",
+            ["predicate"] = "triggerStart",
+            ["rules"] = {
+                [1] = { ["KeyDict_text"] = "DictKey_ActionText_10901", ["flag"] = 1, ["predicate"] = "c_predicate", ["text"] = "DictKey_ActionText_10901" },
+            },
+        },
+        [7] = {
+            ["actions"] = {
+                [1] = { ["flag"] = "Zone-Alpha-Active", ["predicate"] = "a_set_flag" },
+                [2] = { ["predicate"] = "a_do_script", ["text"] = "veafCombatZone.ActivateZone(\"combatZone_Alpha\")" },
+            },
+            ["colorItem"] = "0x00ffffff",
+            ["comment"] = "activate alpha",
+            ["eventlist"] = "",
+            ["predicate"] = "triggerOnce",
+            ["rules"] = {
+                [1] = { ["flag"] = "Start-Zone-Alpha", ["predicate"] = "c_flag_is_true" },
+            },
+        },
+    },
+    ["version"] = 23,
+    ["weather"] = {
+    },
+}
