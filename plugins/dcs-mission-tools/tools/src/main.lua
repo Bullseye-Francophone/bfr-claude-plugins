@@ -20,6 +20,7 @@ Usage:
   mizlint <check>|all <path> [--json] [--checks-dir <dir>]
   mizlint coords <theatre> <x> <y> [--json]
   mizlint list
+  mizlint help
 
 <path> is a mission project (folder containing src/mission), a src/mission
 folder, or a folder containing several mission projects.
@@ -118,6 +119,7 @@ local function report(findings, asJson, allProjects)
       if f.detail then io.write("          ", f.detail, "\n") end
     end
     if allProjects then
+      table.sort(allProjects)
       for _, projectPath in ipairs(allProjects) do
         if not projectsWithFindings[projectPath] then
           io.write("\n", projectPath, "\n")
