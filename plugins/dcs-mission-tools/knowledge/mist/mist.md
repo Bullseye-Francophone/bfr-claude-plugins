@@ -118,23 +118,22 @@ trigrules[1] = {
 mapResource["ResKey_Action_101"] = "mist.lua"
 ```
 
-Compiled form in `trig.funcStartup[1]`:
+Compiled form in `trig.actions[1]` (executed at mission start through the
+`trig.funcStartup[1]` wrapper):
 ```lua
 a_do_script_file(getValueResourceByKey("ResKey_Action_101"));
 ```
 
-### Dynamic loading (bootstrap script)
+### Dynamic loading (loadfile from disk)
 
-A bootstrap script (loaded via the first `a_do_script_file`) uses `loadfile` to load
-scripts from disk at mission start:
+In dynamic mode the Mission Start trigger itself calls `loadfile` on the framework
+checkout pointed to by `VEAF_DYNAMIC_PATH`, MIST first, then the other community
+scripts, then `VeafDynamicLoader.lua` (which replaces the static bundle):
 
 ```lua
--- Inside the bootstrap script (e.g. veafMissionLoader.lua)
-local mistPath = basePath .. "community/mist.lua"
-assert(loadfile(mistPath))()   -- MIST loaded first
-
-local bundlePath = basePath .. "veaf-scripts.lua"
-assert(loadfile(bundlePath))() -- VEAF bundle loaded after
+a_do_script("assert(loadfile(VEAF_DYNAMIC_PATH .. \"/src/scripts/community/mist.lua\"))()")
+a_do_script("assert(loadfile(VEAF_DYNAMIC_PATH .. \"/src/scripts/community/CTLD.lua\"))()")
+a_do_script("assert(loadfile(VEAF_DYNAMIC_PATH .. \"/src/scripts/VeafDynamicLoader.lua\"))()")
 ```
 
 MIST must appear before any VEAF script in either form. The order of subsequent scripts

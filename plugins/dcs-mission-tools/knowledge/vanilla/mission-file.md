@@ -85,7 +85,7 @@ trig = {
   conditions   = { [1] = 'return(c_flag_is_true(...))' },
   flag         = { [1] = false },
   funcStartup  = { [1] = 'if ... then ... end' },  -- camelCase, run once at mission start
-  func         = { [1] = 'if ... then ... end' },  -- run every tick
+  func         = { [1] = 'if ... then ... end' },  -- evaluated every tick (Once triggers disarm via their flag)
   custom        = {},
   customStartup = {},
   events        = {},
