@@ -86,6 +86,7 @@ tools\mizlint.cmd all <path> --checks-dir <extra-checks-dir>
 | `RES-ENCODING` | error | A declared filename matches a file on disk only after mojibake normalization — the build will break |
 | `RES-ORPHAN-KEY` | warning | A key is declared in `dictionary` or `mapResource` but never referenced |
 | `RES-ORPHAN-FILE` | warning | A file exists in `l10n/DEFAULT` but is not declared in `mapResource` |
+| `RES-VMCT-NOT-INSTALLED` | warning | Declared scripts could not be verified because the VMCT npm package is not installed — run `npm`/`yarn install` in the mission project |
 
 ### Triggers (`vanilla` layer)
 
