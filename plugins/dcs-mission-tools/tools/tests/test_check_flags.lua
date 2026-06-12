@@ -17,3 +17,13 @@ local neverRead = t.hasFinding("flags: set but never read", findings, "FLAG-NEVE
 if neverRead then
   t.eq("flags: never-read is info", neverRead.severity, "info")
 end
+if neverRead then
+  t.contains("flags: never-read names the flag", neverRead.message, "Never-Read-Flag")
+end
+
+local singleQuoteProject = {
+  mission = { trig = { actions = {}, conditions = { [1] = "return(c_flag_is_true(\"Quoted-Flag\") )" } } },
+  scriptText = "trigger.action.setUserFlag('Quoted-Flag', true)",
+}
+t.eq("flags: single-quoted setUserFlag satisfies double-quoted read",
+  flags.run(singleQuoteProject), {})

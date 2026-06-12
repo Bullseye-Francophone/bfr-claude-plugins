@@ -5,12 +5,14 @@ local M = { name = "flags", layer = "vanilla" }
 local SET_PATTERNS = {
   'a_set_flag%(\\?"([^"\\]+)\\?"',
   'setUserFlag%(%s*"([^"]+)"',
+  "setUserFlag%(%s*'([^']+)'",
 }
 local READ_PATTERNS = {
   'c_flag_is_true%(\\?"([^"\\]+)\\?"',
   'c_flag_is_false%(\\?"([^"\\]+)\\?"',
   'c_time_since_flag%(\\?"([^"\\]+)\\?"',
   'getUserFlag%(%s*"([^"]+)"',
+  "getUserFlag%(%s*'([^']+)'",
 }
 
 local function collect(text, patterns, into)
