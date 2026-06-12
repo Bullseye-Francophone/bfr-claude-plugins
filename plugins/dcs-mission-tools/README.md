@@ -110,7 +110,8 @@ tools\mizlint.cmd all <path> --checks-dir <extra-checks-dir>
 
 | Code | Severity | Description |
 |------|----------|-------------|
-| `FLAG-NEVER-SET` | warning | A flag is tested in triggers or scripts but never set anywhere |
+| `FLAG-NEVER-SET` | warning | A flag is tested in triggers or scripts but never set anywhere (setters include `a_set_flag`, `setUserFlag` and `a_add_radio_item*` radio items) |
+| `FLAG-DYNAMIC-SET` | info | A tested flag has no literal setter, but mission scripts set flags dynamically and the flag name appears as a string literal in them — likely set at runtime |
 | `FLAG-NEVER-READ` | info | A flag is set but never tested — dead flag or consumed by an external script |
 
 ### Names (`mist` layer)

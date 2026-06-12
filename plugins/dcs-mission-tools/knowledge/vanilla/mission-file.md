@@ -170,3 +170,19 @@ Supported theatres: `caucasus`, `syria`, `persiangulf`, `marianaislands`.
 - **Numeric vs string flags**: DCS flags can be numeric (`1`, `2`) or string (`"myFlag"`).
   mizlint's flag linting covers only quoted string flags; numeric flag mismatches are not
   caught.
+
+- **Radio items are flag setters**: every `a_add_radio_item*` action (plain, coalition,
+  group or unit variant) carries a `flag` that DCS sets when a player selects the item in
+  the F10 radio menu. mizlint counts them as setters, in both their `trigrules` form
+  (`{predicate = "a_add_radio_item", flag = "...", value = 1}`) and their compiled form
+  (`a_add_radio_item(getValueDictByKey("..."), "<flag>", 1)`).
+
+- **Dynamically set flags**: scripts often set flags through variables rather than
+  literals (persistence loops such as `trigger.action.setUserFlag(ListeTriggers[i], 0)`).
+  Static analysis cannot resolve those calls. When a mission script contains a dynamic
+  `setUserFlag` call, mizlint downgrades every tested-but-not-literally-set flag whose
+  exact name appears as a string literal in the scripts from `FLAG-NEVER-SET` (warning)
+  to `FLAG-DYNAMIC-SET` (info) instead of suppressing it: the linter cannot prove the
+  set, so the finding stays visible but no longer alarms. A tested flag whose name
+  appears nowhere (typo, template leftover, or set by another mission of a multi-mission
+  campaign) remains a `FLAG-NEVER-SET` warning.
