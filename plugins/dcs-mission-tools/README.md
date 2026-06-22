@@ -14,8 +14,9 @@ A Claude Code plugin to understand, lint and explain DCS World missions built on
 | Agent | `mission-explorer` | Answer targeted questions about huge mission files using anchored searches and compact extracts |
 | Agent | `lua-analyst` | Classify every API call in a mission script by layer (vanilla SSE / MIST / VMCT) |
 | Agent | `vmct-expert` | Answer questions about the VEAF-Mission-Creation-Tools framework from the bundled knowledge base |
+| Agent | `dcs-reference` | Resolve DCS unit/weapon/sensor type strings to display names and attributes, consulted live from the Quaggles datamine |
 | CLI | `mizlint` | Standalone static-analysis tool — no Claude Code required (`tools/mizlint.sh` / `tools\mizlint.cmd`) |
-| Knowledge base | `knowledge/` | Seven reference files covering vanilla mission internals, MIST, and the VMCT architecture |
+| Knowledge base | `knowledge/` | Reference files covering vanilla mission internals, MIST, the VMCT architecture, and the DCS database |
 
 Knowledge base tree:
 
@@ -25,6 +26,7 @@ knowledge/
     hoggit-links.md        Hoggit wiki quick-reference links for the SSE
     mission-file.md        Structure of the DCS mission Lua tables
     resources.md           How dictionary and mapResource work
+    dcs-database.md        DCS unit/weapon database (Quaggles datamine) — live external reference
   mist/
     mist.md                MIST API overview and common patterns
   frameworks/

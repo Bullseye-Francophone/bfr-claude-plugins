@@ -28,7 +28,7 @@ The `mission` file is the main artefact. It contains all coalition data, trigger
 
 | Key | Description |
 |-----|-------------|
-| `coalition` | Tree: coalition → country → plane/helicopter/vehicle/ship/static → group → units. Group and unit names are plain strings in normalized missions. |
+| `coalition` | Tree: coalition → country → plane/helicopter/vehicle/ship/static → group → units. Group and unit names are plain strings in normalized missions. Each unit's `["type"]` is a DCS type string — resolve it via the DCS datamine, see [dcs-database.md](dcs-database.md). |
 | `triggers.zones` | Array of trigger zone records (see Coordinates section). |
 | `trig` | Compiled trigger data DCS executes (see trig vs trigrules). |
 | `trigrules` | Mission Editor source: array of human-readable rule records. |

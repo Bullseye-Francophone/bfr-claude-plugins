@@ -14,6 +14,10 @@ Delegate raw lookups to the `mission-explorer` agent; it returns compact extract
    `weather.name`, `descriptionText` (resolve the DictKey in `l10n/DEFAULT/dictionary`).
 2. Order of battle: for each coalition, count groups per category
    (plane/helicopter/vehicle/ship/static) and list named flights with airframe types.
+   To turn cryptic `["type"]` strings into display names, categories or notable attributes
+   (RCS, sensors, payloads), delegate to the `dcs-reference` agent, which consults the live
+   DCS datamine (see `${CLAUDE_PLUGIN_ROOT}/knowledge/vanilla/dcs-database.md`). Optional and
+   network-dependent — skip gracefully offline; the raw type strings still stand on their own.
 3. Zones: list `triggers.zones[].name` (grouped by prefix conventions if obvious).
 4. Logic: list `trigrules[].comment` + predicate; flag VEAF-injected triggers
    (the 7 MISSION START ones, see

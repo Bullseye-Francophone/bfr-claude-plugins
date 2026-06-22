@@ -29,6 +29,9 @@
 
 - **Mission Scripting Tools Documentation**: https://wiki.hoggitworld.com/view/Mission_Scripting_Tools_Documentation
 
+- **DCS unit/weapon database (Quaggles datamine)**: see [dcs-database.md](dcs-database.md) —
+  the game's own unit, weapon, warhead and AI-sensor definitions, consulted live on demand.
+
 ---
 
 ## Caveat
