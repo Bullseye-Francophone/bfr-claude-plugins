@@ -3,3 +3,4 @@
 lua-5.4.*/
 /node_modules/
 plugins/*/node_modules/
+/docs/superpowers/
