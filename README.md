@@ -9,7 +9,13 @@ Claude Code plugin marketplace by Bullseye Francophone (BFR), for DCS World miss
 ## Install
 
 ```
-/plugin marketplace add https://github.com/Bullseye-Francophone/bfr-claude-plugins
+/plugin marketplace add Bullseye-Francophone/bfr-claude-plugins
 /plugin install dcs-mission-tools@bfr
 ```
+
+## License
+
+MIT — see [LICENSE](LICENSE). Bundled third-party components and their notices are listed in [plugins/dcs-mission-tools/THIRD_PARTY_NOTICES.md](plugins/dcs-mission-tools/THIRD_PARTY_NOTICES.md).
+
+Not affiliated with Eagle Dynamics, VEAF, or the MIST/CTLD authors.
 

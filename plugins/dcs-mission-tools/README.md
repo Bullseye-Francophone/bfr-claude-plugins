@@ -40,7 +40,7 @@ knowledge/
 
 ## mizlint — standalone usage
 
-No Claude Code required. The launchers vendor a Lua 5.4 interpreter for the three most common platforms (~1.6 MB total, nothing to install). On other platforms, mizlint falls back to a `lua` binary found on `PATH`.
+No Claude Code required. The launchers vendor a Lua 5.4 interpreter for the three most common platforms (~1.6 MB total, nothing to install; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for the Lua license). On other platforms, mizlint falls back to a `lua` binary found on `PATH`.
 
 **Linux / macOS**
 
