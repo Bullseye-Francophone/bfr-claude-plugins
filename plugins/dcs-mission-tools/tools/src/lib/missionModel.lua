@@ -145,6 +145,7 @@ local function loadMiz(mizPath)
   end
 
   return {
+    isMiz = true,
     root = mizPath, -- display name; also makes LOAD-MIZ-AT-ROOT a no-op (a file lists empty)
     missionDir = extractDir,
     l10nDir = l10nDir,
