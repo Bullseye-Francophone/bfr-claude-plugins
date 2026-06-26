@@ -50,13 +50,18 @@ function M.encode(value)
   error("json.encode: unsupported type " .. valueType)
 end
 
--- Decode (JSON -> Lua) per doc/developer/export-json-contract.md §7:
---   * array  JSON -> Lua sequence (keys 1..n)
---   * object JSON -> Lua table; a canonical integer-string key (§3) becomes an
---     integer Lua key, any other key stays a string
---   * [] and {} both decode to an empty Lua table (§4)
--- This restores parity with the old `load()` path table-for-table (array-ness
+-- Decode (JSON -> Lua) per doc/developer/export-json-contract.md (schemaVersion 2):
+--   * array JSON -> Lua sequence (keys 1..n)
+--   * object JSON without a sole `__luaTable__` key -> table with verbatim string
+--     keys (no numeric coercion -- this keeps DCS `failures = {["10"]=...}` correct)
+--   * object JSON whose ONLY key is `__luaTable__`, holding a list of [key, value]
+--     pairs -> table built from the pairs; a JSON number pair-key is an integer Lua
+--     key, a JSON string pair-key is a string Lua key (lossless, no guessing)
+--   * [] and {} both decode to an empty Lua table
+-- The decoded tables reproduce the old `load()` output table-for-table (array-ness
 -- and key types), so the checks yield identical findings.
+
+local SENTINEL = "__luaTable__"
 
 local function decodeError(pos, message)
   error(string.format("json.decode: %s at position %d", message, pos))
@@ -67,15 +72,27 @@ local function skipWs(str, pos)
   return last + 1
 end
 
--- A canonical integer-string key: matches ^-?%d+$ with no leading zero (except
--- the single "0"). Returns the Lua integer, or nil to keep the string key.
-local function integerKey(key)
-  if key == "0" then return 0 end
-  if key:match("^%-?[1-9]%d*$") then
-    local n = tonumber(key)
-    if n and math.type(n) == "integer" then return n end
+-- The single key of `tbl` if it has exactly one, else nil.
+local function soleKey(tbl)
+  local k = next(tbl)
+  if k == nil or next(tbl, k) ~= nil then return nil end
+  return k
+end
+
+-- Build a Lua table from a `__luaTable__` pair list, preserving each pair-key's
+-- JSON type (number -> integer/number key, string -> string key). Returns nil if
+-- the value is not the strict pair-list shape, so the caller keeps it verbatim.
+local function tableFromPairs(pairs)
+  if type(pairs) ~= "table" then return nil end
+  local out = {}
+  for _, pair in ipairs(pairs) do
+    if type(pair) ~= "table" then return nil end
+    local key = pair[1]
+    local keyType = type(key)
+    if keyType ~= "number" and keyType ~= "string" then return nil end
+    out[key] = pair[2]
   end
-  return nil
+  return out
 end
 
 local unescapes = {
@@ -157,13 +174,21 @@ local function decodeObject(str, pos)
     if str:sub(pos, pos) ~= ":" then decodeError(pos, "expected ':'") end
     local value
     value, pos = decodeValue(str, skipWs(str, pos + 1))
-    result[integerKey(key) or key] = value
+    result[key] = value
     pos = skipWs(str, pos)
     local c = str:sub(pos, pos)
-    if c == "}" then return result, pos + 1 end
+    if c == "}" then break end
     if c ~= "," then decodeError(pos, "expected ',' or '}'") end
     pos = skipWs(str, pos + 1)
   end
+  pos = pos + 1
+  -- A sole `__luaTable__` key holding a strict pair list is the envelope (§2);
+  -- anything else (including a verbatim object that merely contains the key) stays as-is.
+  if soleKey(result) == SENTINEL then
+    local built = tableFromPairs(result[SENTINEL])
+    if built then return built, pos end
+  end
+  return result, pos
 end
 
 function decodeValue(str, pos)
