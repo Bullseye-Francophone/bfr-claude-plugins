@@ -50,14 +50,23 @@ function M.loadProject(root)
     end
   end
 
-  local mission, missionErr = loader.loadLuaTable(fs.join(missionDir, "mission"), "mission")
-  if not mission then return nil, missionErr end
-
   local l10nDir = fs.join(missionDir, "l10n", "DEFAULT")
-  local dictionary, dictErr = loader.loadLuaTable(fs.join(l10nDir, "dictionary"), "dictionary")
-  if not dictionary then return nil, dictErr end
-  local mapResource, mapErr = loader.loadLuaTable(fs.join(l10nDir, "mapResource"), "mapResource")
-  if not mapResource then return nil, mapErr end
+
+  -- Prefer veaf-tools (safe pure-Python parse, no Lua execution); fall back to
+  -- the sandboxed lua54 loader when veaf-tools is not installed.
+  local mission, dictionary, mapResource
+  local exported = loader.exportTables(root)
+  if exported then
+    mission, dictionary, mapResource = exported.mission, exported.dictionary, exported.mapResource
+  else
+    local err
+    mission, err = loader.loadLuaTable(fs.join(missionDir, "mission"), "mission")
+    if not mission then return nil, err end
+    dictionary, err = loader.loadLuaTable(fs.join(l10nDir, "dictionary"), "dictionary")
+    if not dictionary then return nil, err end
+    mapResource, err = loader.loadLuaTable(fs.join(l10nDir, "mapResource"), "mapResource")
+    if not mapResource then return nil, err end
+  end
 
   local l10nFiles = {}
   for _, path in ipairs(fs.listFiles(l10nDir)) do
