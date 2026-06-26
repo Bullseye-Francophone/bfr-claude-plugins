@@ -61,30 +61,44 @@ local function succeeded(status)
   return status == true or status == 0
 end
 
+-- Run a command with its output discarded. On Windows, `cmd /c` mis-parses a line
+-- that starts with a quoted executable followed by more quoted arguments, so the
+-- whole command is wrapped in one extra pair of quotes (cmd strips the outermost
+-- pair, leaving the inner quoting intact).
+local function runQuiet(inner)
+  local redirected = inner .. (fs.isWindows and " >nul 2>nul" or " >/dev/null 2>&1")
+  local cmd = fs.isWindows and ('"' .. redirected .. '"') or redirected
+  return succeeded(os.execute(cmd))
+end
+
 -- Resolve the veaf-tools binary: the VEAF_TOOLS env var (path or name) wins;
 -- otherwise `veaf-tools` on PATH. Returns the command string, or nil if absent.
 function M.resolveVeafTools()
   local env = os.getenv("VEAF_TOOLS")
   if env and env ~= "" then return env end
-  local probe = quote("veaf-tools") .. (fs.isWindows and " --help >nul 2>nul" or " --help >/dev/null 2>&1")
-  if succeeded(os.execute(probe)) then return "veaf-tools" end
+  if runQuiet(quote("veaf-tools") .. " --help") then return "veaf-tools" end
   return nil
 end
 
 -- Parse a mission project (folder or .miz) via veaf-tools export. Returns the
 -- decoded contract object {schemaVersion, theatre, mission, dictionary,
--- mapResource}, or nil + error.
-function M.exportTables(input)
+-- mapResource}, or nil + error. When `extractDir` is given (used for a .miz
+-- input), veaf-tools also unpacks the archive's embedded resources there.
+function M.exportTables(input, extractDir)
   local bin = M.resolveVeafTools()
   if not bin then return nil, "veaf-tools not found (set VEAF_TOOLS or add it to PATH)" end
 
   local outFile = tempJsonPath()
-  local cmd = table.concat({
+  local args = {
     quote(bin), "export", quote(input), quote(outFile),
     "--format", "json", "--compact", "--no-pause",
-  }, " ") .. (fs.isWindows and " >nul 2>nul" or " >/dev/null 2>&1")
+  }
+  if extractDir then
+    args[#args + 1] = "--extract-dir"
+    args[#args + 1] = quote(extractDir)
+  end
 
-  if not succeeded(os.execute(cmd)) then
+  if not runQuiet(table.concat(args, " ")) then
     os.remove(outFile)
     return nil, "veaf-tools export failed for " .. input
   end

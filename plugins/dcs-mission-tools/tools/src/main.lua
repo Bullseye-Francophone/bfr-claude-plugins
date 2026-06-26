@@ -65,6 +65,9 @@ end
 
 local function discoverProjects(path)
   path = path:gsub("[/\\]+$", "")
+  if path:match("%.miz$") and fs.exists(path) then
+    return { path }
+  end
   if fs.exists(fs.join(path, "src", "mission", "mission"))
      or fs.exists(fs.join(path, "mission")) then
     return { path }
