@@ -38,9 +38,21 @@ knowledge/
 
 ---
 
+## Reading missions safely (no Lua execution)
+
+A `.miz` is an unsigned ZIP, and its `mission` / `dictionary` / `mapResource` entries are Lua **data** (`mission = { … }`). Reading them by *executing* that Lua — even sandboxed — runs code from a file that may come from an untrusted source (a forum, a public server, a DM). Parsing data should never execute code.
+
+mizlint therefore reads these tables with **veaf-tools** (the [VEAF Mission Creation Tools](https://github.com/VEAF/VEAF-Mission-Creation-Tools) `export` command), a pure-Python parser that never runs Lua. A Windows build of `veaf-tools.exe` is vendored under `tools/bin/windows-x64/` (like the Lua interpreters) and used automatically — nothing to install. This also lets mizlint read a **packed `.miz` directly**, not just an extracted mission folder.
+
+When veaf-tools is not available (e.g. Linux/macOS, where no binary is shipped), mizlint falls back to a sandboxed Lua 5.4 loader for extracted folders; a `.miz` input requires veaf-tools, since the tool cannot unzip on its own. The `VEAF_TOOLS` environment variable overrides which `veaf-tools` is used.
+
+> A linted `.miz` is a built artifact, not a source tree: its embedded scripts are the real runtime scripts, so the data checks (`triggers`, `loading`) are exact while the script/resource checks reflect what is actually shipped in the archive.
+
+---
+
 ## mizlint — standalone usage
 
-No Claude Code required. The launchers vendor a Lua 5.4 interpreter for the three most common platforms (~1.6 MB total, nothing to install; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for the Lua license). On other platforms, mizlint falls back to a `lua` binary found on `PATH`.
+No Claude Code required. The launchers vendor a Lua 5.4 interpreter for the three most common platforms (~1.6 MB total, nothing to install; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for the Lua and veaf-tools licenses). On other platforms, mizlint falls back to a `lua` binary found on `PATH`.
 
 **Linux / macOS**
 
@@ -64,7 +76,7 @@ tools\mizlint.cmd all <path> --json
 tools\mizlint.cmd all <path> --checks-dir <extra-checks-dir>
 ```
 
-`<path>` is a mission project folder (containing `src/mission`), a `src/mission` folder, or a parent folder containing several mission projects (all sub-projects are linted).
+`<path>` is a mission project folder (containing `src/mission`), a `src/mission` folder, a parent folder containing several mission projects (all sub-projects are linted), or a packed `.miz` file (read safely via the bundled veaf-tools — see [Reading missions safely](#reading-missions-safely-no-lua-execution)).
 
 **Exit codes**
 
