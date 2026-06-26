@@ -64,11 +64,14 @@ local function loadFolder(root)
 
   local l10nDir = fs.join(missionDir, "l10n", "DEFAULT")
 
-  -- Prefer veaf-tools (safe pure-Python parse, no Lua execution); fall back to
-  -- the sandboxed lua54 loader when veaf-tools is not installed.
+  -- veaf-tools is the parser whenever it is available (safe pure-Python parse, no
+  -- Lua execution). If it is present but fails, that is a hard error: we must NOT
+  -- fall back to executing the file's Lua, which could be hostile. The sandboxed
+  -- lua54 loader runs only as the degraded path when veaf-tools is absent entirely.
   local mission, dictionary, mapResource
-  local exported = loader.exportTables(root)
-  if exported then
+  if loader.resolveVeafTools() then
+    local exported, err = loader.exportTables(root)
+    if not exported then return nil, err end
     mission, dictionary, mapResource = exported.mission, exported.dictionary, exported.mapResource
   else
     local err

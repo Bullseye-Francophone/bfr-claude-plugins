@@ -71,13 +71,35 @@ local function runQuiet(inner)
   return succeeded(os.execute(cmd))
 end
 
--- Resolve the veaf-tools binary: the VEAF_TOOLS env var (path or name) wins;
--- otherwise `veaf-tools` on PATH. Returns the command string, or nil if absent.
+-- The veaf-tools.exe vendored next to this tool, derived from this file's own
+-- location (tools/src/lib/missionLoader.lua -> tools/bin/windows-x64/...). Only a
+-- Windows binary is shipped, so this never resolves on other platforms (which keep
+-- the lua54 fallback); the committed .exe is not runnable there anyway.
+local function bundledVeafTools()
+  if not fs.isWindows then return nil end
+  local file = debug.getinfo(1, "S").source:match("^@(.*)$")
+  local toolsDir = file and file:match("^(.*)[/\\]src[/\\]lib[/\\]missionLoader%.lua$")
+  if not toolsDir then return nil end
+  local exe = toolsDir .. "/bin/windows-x64/veaf-tools.exe"
+  return fs.exists(exe) and exe or nil
+end
+
+-- Resolve the veaf-tools binary (memoized): the VEAF_TOOLS env var (path or name)
+-- wins as an override, then the vendored binary, then `veaf-tools` on PATH.
+-- Returns the command string, or nil if none is available.
+local resolved, resolvedBin = false, nil
 function M.resolveVeafTools()
+  if resolved then return resolvedBin end
+  resolved = true
   local env = os.getenv("VEAF_TOOLS")
-  if env and env ~= "" then return env end
-  if runQuiet(quote("veaf-tools") .. " --help") then return "veaf-tools" end
-  return nil
+  if env and env ~= "" then
+    resolvedBin = env
+  elseif bundledVeafTools() then
+    resolvedBin = bundledVeafTools()
+  elseif runQuiet(quote("veaf-tools") .. " --help") then
+    resolvedBin = "veaf-tools"
+  end
+  return resolvedBin
 end
 
 -- Parse a mission project (folder or .miz) via veaf-tools export. Returns the
