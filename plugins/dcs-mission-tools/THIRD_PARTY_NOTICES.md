@@ -41,8 +41,9 @@ For details and rationale, see https://www.lua.org/license.html.
 
 ## veaf-tools (VEAF Mission Creation Tools)
 
-`tools/bin/windows-x64/veaf-tools.exe` is a vendored Windows build of the VEAF
-Mission Creation Tools `export` command (v6.6.6). `mizlint` uses it to parse a
+`tools/bin/windows-x64/veaf-tools.exe`, `tools/bin/linux-x64/veaf-tools` and
+`tools/bin/macos-arm64/veaf-tools` are vendored builds of the VEAF Mission
+Creation Tools `export` command (v6.7.3). `mizlint` uses them to parse a
 mission's `mission` / `dictionary` / `mapResource` data with a pure-Python
 parser instead of executing it through a Lua interpreter.
 
@@ -50,7 +51,7 @@ veaf-tools is published by the Virtual European Air Force (VEAF) at
 https://github.com/VEAF/VEAF-Mission-Creation-Tools and licensed under the
 Apache License 2.0 (see the project's `LICENSE.md`).
 
-The vendored binary is a PyInstaller bundle that additionally embeds a Python
+Each vendored binary is a PyInstaller bundle that additionally embeds a Python
 runtime and third-party Python libraries (e.g. `luadata`, `PyYAML`, `Typer`),
 each under its own license; refer to the upstream project for the full
 dependency manifest.

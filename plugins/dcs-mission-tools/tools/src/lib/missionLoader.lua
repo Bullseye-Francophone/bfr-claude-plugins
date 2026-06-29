@@ -71,16 +71,34 @@ local function runQuiet(inner)
   return succeeded(os.execute(cmd))
 end
 
--- The veaf-tools.exe vendored next to this tool, derived from this file's own
--- location (tools/src/lib/missionLoader.lua -> tools/bin/windows-x64/...). Only a
--- Windows binary is shipped, so this never resolves on other platforms (which keep
--- the lua54 fallback); the committed .exe is not runnable there anyway.
+-- Map the host to its vendored binary, relative to tools/bin/. Windows is known
+-- from package.config; Unix shells out to uname. The cases mirror mizlint.sh and
+-- the bin/<platform>/ layout. An unrecognised platform returns nil (keeping the
+-- lua54 fallback), and the committed binaries are not runnable there anyway.
+local function platformBinary()
+  if fs.isWindows then return "windows-x64/veaf-tools.exe" end
+  local proc = io.popen("uname -s 2>/dev/null && uname -m 2>/dev/null")
+  if not proc then return nil end
+  local sys = proc:read("*l")
+  local mach = proc:read("*l")
+  proc:close()
+  local key = tostring(sys) .. "-" .. tostring(mach)
+  if key == "Darwin-arm64" then return "macos-arm64/veaf-tools" end
+  if key == "Linux-x86_64" then return "linux-x64/veaf-tools" end
+  return nil
+end
+
+-- The veaf-tools binary vendored next to this tool, derived from this file's own
+-- location (tools/src/lib/missionLoader.lua -> tools/bin/<platform>/...). Windows,
+-- Linux x86_64 and macOS arm64 are shipped; any other platform keeps the lua54
+-- fallback.
 local function bundledVeafTools()
-  if not fs.isWindows then return nil end
+  local rel = platformBinary()
+  if not rel then return nil end
   local file = debug.getinfo(1, "S").source:match("^@(.*)$")
   local toolsDir = file and file:match("^(.*)[/\\]src[/\\]lib[/\\]missionLoader%.lua$")
   if not toolsDir then return nil end
-  local exe = toolsDir .. "/bin/windows-x64/veaf-tools.exe"
+  local exe = toolsDir .. "/bin/" .. rel
   return fs.exists(exe) and exe or nil
 end
 

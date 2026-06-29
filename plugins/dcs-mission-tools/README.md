@@ -42,9 +42,9 @@ knowledge/
 
 A `.miz` is an unsigned ZIP, and its `mission` / `dictionary` / `mapResource` entries are Lua **data** (`mission = { … }`). Reading them by *executing* that Lua — even sandboxed — runs code from a file that may come from an untrusted source (a forum, a public server, a DM). Parsing data should never execute code.
 
-mizlint therefore reads these tables with **veaf-tools** (the [VEAF Mission Creation Tools](https://github.com/VEAF/VEAF-Mission-Creation-Tools) `export` command), a pure-Python parser that never runs Lua. A Windows build of `veaf-tools.exe` is vendored under `tools/bin/windows-x64/` (like the Lua interpreters) and used automatically — nothing to install. This also lets mizlint read a **packed `.miz` directly**, not just an extracted mission folder.
+mizlint therefore reads these tables with **veaf-tools** (the [VEAF Mission Creation Tools](https://github.com/VEAF/VEAF-Mission-Creation-Tools) `export` command), a pure-Python parser that never runs Lua. Builds of `veaf-tools` are vendored under `tools/bin/windows-x64/`, `tools/bin/linux-x64/` and `tools/bin/macos-arm64/` (like the Lua interpreters) and the matching one is used automatically — nothing to install. This also lets mizlint read a **packed `.miz` directly**, not just an extracted mission folder.
 
-When veaf-tools is not available (e.g. Linux/macOS, where no binary is shipped), mizlint falls back to a sandboxed Lua 5.4 loader for extracted folders; a `.miz` input requires veaf-tools, since the tool cannot unzip on its own. The `VEAF_TOOLS` environment variable overrides which `veaf-tools` is used.
+When veaf-tools is not available (an unsupported platform, or a stripped checkout), mizlint falls back to a sandboxed Lua 5.4 loader for extracted folders; a `.miz` input requires veaf-tools, since the tool cannot unzip on its own. The `VEAF_TOOLS` environment variable overrides which `veaf-tools` is used.
 
 > A linted `.miz` is a built artifact, not a source tree: its embedded scripts are the real runtime scripts, so the data checks (`triggers`, `loading`) are exact while the script/resource checks reflect what is actually shipped in the archive.
 
