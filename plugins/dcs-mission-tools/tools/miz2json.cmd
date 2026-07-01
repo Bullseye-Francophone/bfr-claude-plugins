@@ -16,12 +16,11 @@ set "COMPACT=--compact"
 if /I "%~1"=="--pretty" ( set "COMPACT=" & shift )
 if /I "%~1"=="-p" ( set "COMPACT=" & shift )
 
-if defined VEAF_TOOLS (
-  set "VT=%VEAF_TOOLS%"
-) else (
-  set "VT=%DIR%bin\windows-x64\veaf-tools.exe"
-  if not exist "%VT%" set "VT=veaf-tools"
-)
+rem Resolve at top level (not inside an if-block): %VT% must expand after the
+rem preceding `set`, which a parenthesized block would defeat without delayed expansion.
+set "VT=%VEAF_TOOLS%"
+if not defined VT set "VT=%DIR%bin\windows-x64\veaf-tools.exe"
+if not exist "%VT%" if not defined VEAF_TOOLS set "VT=veaf-tools"
 
 set "INPUT=%~1"
 if "%INPUT%"=="" (
@@ -39,7 +38,7 @@ if not "%OUT%"=="" (
   exit /b 0
 )
 
-set "TMP=%TEMP%\miz2json-%RANDOM%%RANDOM%.json"
+set "TMP=%TEMP%\miz2json-%RANDOM%%RANDOM%%RANDOM%.json"
 "%VT%" export "%INPUT%" "%TMP%" --format json %COMPACT% --no-pause >nul 2>&1
 if errorlevel 1 (
   del "%TMP%" 2>nul

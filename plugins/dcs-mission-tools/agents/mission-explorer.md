@@ -23,11 +23,15 @@ jq -c '.mission.trigrules[] | select(([.actions,.rules]|tostring)|test("<name>")
 
 - Export **once** per mission and reuse the file for every query — never re-export
   per question.
+- **Shape every query** — project the fields you need, use `-c`, and cap with
+  `| .[:20]` or `| length`; never pipe a whole subtree (`.mission`, a full array) into
+  your context. jq's value is exact answers, not raw dumps.
 - **Completeness:** for "find EVERY reference to X", use the recursive sweep
-  `jq -r '[.. | strings | select(test("X";"i"))] | unique[]' mission.json`. Landmark
-  paths are shortcuts, not an exhaustive whitelist — never report "X appears only in
-  `<place>`" from a landmark query alone. Logic in `src/scripts/*.lua` is NOT in the
-  export; a full trace must also grep the scripts.
+  `jq -r '[.. | strings | select(test("\\bX\\b";"i"))] | unique[]' mission.json` (anchor
+  `\bX\b` so `Zone-1` does not match `Zone-10`). Landmark paths are shortcuts, not an
+  exhaustive whitelist — never report "X appears only in `<place>`" from a landmark query
+  alone. Logic in `src/scripts/*.lua` is NOT in the export; a full trace must also grep
+  the scripts.
 - If `miz2json` exits `3` (no veaf-tools for this platform) or jq is absent, use the
   fallback ladder in mission-json.md (python3, or `--pretty` + grep, or anchored grep
   on the raw Lua).

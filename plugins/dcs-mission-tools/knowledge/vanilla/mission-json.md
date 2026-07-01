@@ -37,15 +37,16 @@ Lua → JSON mapping:
 |-----------|------|------|
 | record (string keys) | object | keys verbatim (`DictKey_...`, `comment`, ...) |
 | sequence (`1..n`) | array | `#t` in Lua = `length` in jq |
-| string-numeric keys (`failures["10"]`) | object with string keys | stays `"10"`, never coerced to a number |
+| string keys that look numeric | object with string keys | a DCS `["10"]`-style key stays JSON key `"10"`, never a number |
 | sparse / mixed integer keys | `{ "__luaTable__": [[k,v], ...] }` | envelope: array of `[key,value]` pairs, lossless key types |
 
 **Where the `__luaTable__` envelope occurs (measured on a real 25 MB mission):**
-only `callsign`, `pylons`, `teamMembers`, and two internal indices (`func`,
-`failures`). It **never** appears in `dictionary`, `mapResource`, `trigrules`, or
-`triggers.zones` — the surfaces you normally query are plain objects/arrays, so
-recipes there need no envelope handling. When you *do* hit one (a unit callsign or
-pylon loadout):
+overwhelmingly under `callsign` and `pylons` (unit callsigns and weapon loadouts); a
+few whole-table indices such as `.mission.failures` use it too. It **never** appears in
+`dictionary`, `mapResource`, `trigrules`, or `triggers.zones` — the surfaces you
+normally query are plain objects/arrays, so recipes there need no envelope handling.
+Rule of thumb: **when a query returns an object whose only key is `__luaTable__`, you've
+hit an envelope** — read it with the idiom below (a unit callsign or pylon loadout):
 
 ```sh
 # a specific enveloped key
@@ -107,10 +108,10 @@ landmark path — a flag or name can appear in places you did not anticipate. Us
 recursive descent, which reaches every value at any depth and cannot miss one:
 
 ```sh
-# every string VALUE mentioning X, deduped
-jq -r '[.. | strings | select(test("Peca";"i"))] | unique[]' mission.json
+# every string VALUE mentioning X, deduped (anchor \bX\b so Zone-1 != Zone-10)
+jq -r '[.. | strings | select(test("\\bPeca\\b";"i"))] | unique[]' mission.json
 # include object KEYS too (e.g. a flag used as a key somewhere)
-jq -r '[paths | .[-1] | select(type=="string" and test("Peca";"i"))] | unique[]' mission.json
+jq -r '[paths | .[-1] | select(type=="string" and test("\\bPeca\\b";"i"))] | unique[]' mission.json
 ```
 
 Never conclude "X appears only in `<place>`" from a landmark query — confirm with the

@@ -22,10 +22,16 @@ produce the complete causal chain with source citations.
    jq -c '.mission.triggers.zones[] | select(.name|test("<name>"))' mission.json
    ```
 
-   For completeness use the recursive sweep
-   `jq -r '[.. | strings | select(test("<name>";"i"))] | unique[]' mission.json` — a
-   flag can be set/read in places a single landmark query misses. Word-boundary anchor
-   (`Zone-1` must not match `Zone-10`).
+   For completeness use the recursive sweep — anchor the term so `Zone-1` does not match
+   `Zone-10`:
+   `jq -r '[.. | strings | select(test("\\b<name>\\b";"i"))] | unique[]' mission.json` — a
+   flag can be set/read in places a single landmark query misses.
+
+   Directionality (feeds step 4): a flag is SET by an action `{predicate:"a_set_flag"}`
+   (compiled `a_set_flag("<name>")` / `setUserFlag("<name>",…)` in `.mission.trig.actions[]`)
+   and CONSUMED by a condition `{predicate:"c_flag_is_true"}` (compiled
+   `c_flag_is_true("<name>")` / `getUserFlag("<name>")` in `.mission.trig.conditions[]`).
+   Split your hits on these predicates.
 2. For each hit, read its `trigrules[i]` — `comment`, `rules` (conditions) and
    `actions` are the editor-level truth (see
    `${CLAUDE_PLUGIN_ROOT}/knowledge/vanilla/mission-file.md` → *trig vs trigrules*).

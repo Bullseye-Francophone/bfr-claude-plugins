@@ -29,8 +29,9 @@ is unavailable.
    Optional and network-dependent — skip gracefully offline; the raw type strings still
    stand on their own.
 3. Zones: `.mission.triggers.zones[].name` (grouped by prefix conventions if obvious).
-4. Logic: `.mission.trigrules[] | {comment, predicate}`; flag VEAF-injected triggers
-   (the 7 MISSION START ones, see
+4. Logic: `.mission.trigrules[] | {comment, predicate}`; flag the VEAF-injected head
+   triggers (the first ~7 `triggerStart` entries — script/config loading, mission start,
+   CTLD beacons; identified by position, not comment text — see
    `${CLAUDE_PLUGIN_ROOT}/knowledge/frameworks/vmct/injection.md`) separately from
    mission-specific logic.
 5. Scripts: list `src/scripts/*.lua` (NOT in the export — read them on disk) and which
