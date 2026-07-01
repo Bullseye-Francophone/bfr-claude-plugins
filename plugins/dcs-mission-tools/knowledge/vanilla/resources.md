@@ -1,5 +1,9 @@
 # DCS Resource and Dictionary System
 
+> To query these tables cheaply, export the mission to JSON and use jq — see
+> [mission-json.md](mission-json.md). Classify keys by *usage* (below), not by prefix,
+> and the JSON recipes resolve correctly.
+
 ## The Two Indirection Tables
 
 Every `.miz` contains two key→value lookup tables inside `l10n/DEFAULT/`:
