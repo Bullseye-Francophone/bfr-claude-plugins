@@ -22,6 +22,10 @@ KNEEBOARD/
 
 The `mission` file is the main artefact. It contains all coalition data, triggers, weather, and metadata as a single Lua table assignment (`mission = { ... }`).
 
+> To query these tables cheaply, export the mission to JSON and drive the lookups with
+> jq — see [mission-json.md](mission-json.md). This file remains the authority on
+> structure and semantics; the JSON is just a fast, safe way to read it.
+
 ---
 
 ## Top-Level Keys of the `mission` Table

@@ -11,11 +11,12 @@ A Claude Code plugin to understand, lint and explain DCS World missions built on
 | Skill | `lint-mission` | Run mizlint on a mission project and explain every finding across all layers |
 | Skill | `map-mission` | Build a synthetic map of a mission — order of battle, zones, triggers, loaded scripts, kneeboards |
 | Skill | `trace-logic` | Trace a chain of mission logic from a trigger or flag down through scripts, MIST and VEAF calls |
-| Agent | `mission-explorer` | Answer targeted questions about huge mission files using anchored searches and compact extracts |
+| Agent | `mission-explorer` | Answer targeted questions about huge mission files by exporting them to JSON and querying with jq (anchored grep as fallback) |
 | Agent | `lua-analyst` | Classify every API call in a mission script by layer (vanilla SSE / MIST / VMCT) |
 | Agent | `vmct-expert` | Answer questions about the VEAF-Mission-Creation-Tools framework from the bundled knowledge base |
 | Agent | `dcs-reference` | Resolve DCS unit/weapon/sensor type strings to display names and attributes, consulted live from the Quaggles datamine |
 | CLI | `mizlint` | Standalone static-analysis tool — no Claude Code required (`tools/mizlint.sh` / `tools\mizlint.cmd`) |
+| CLI | `miz2json` | Export a mission (folder or `.miz`) to JSON via veaf-tools for cheap `jq`/`python` exploration (`tools/miz2json.sh` / `tools\miz2json.cmd`) |
 | Knowledge base | `knowledge/` | Reference files covering vanilla mission internals, MIST, the VMCT architecture, and the DCS database |
 
 Knowledge base tree:
@@ -26,6 +27,7 @@ knowledge/
     hoggit-links.md        Hoggit wiki quick-reference links for the SSE
     mission-file.md        Structure of the DCS mission Lua tables
     resources.md           How dictionary and mapResource work
+    mission-json.md        Export a mission to JSON (veaf-tools) and query it with jq
     dcs-database.md        DCS unit/weapon database (Quaggles datamine) — live external reference
   mist/
     mist.md                MIST API overview and common patterns
@@ -47,6 +49,8 @@ mizlint therefore reads these tables with **veaf-tools** (the [VEAF Mission Crea
 When veaf-tools is not available (an unsupported platform, or a stripped checkout), mizlint falls back to a sandboxed Lua 5.4 loader for extracted folders; a `.miz` input requires veaf-tools, since the tool cannot unzip on its own. The `VEAF_TOOLS` environment variable overrides which `veaf-tools` is used.
 
 > A linted `.miz` is a built artifact, not a source tree: its embedded scripts are the real runtime scripts, so the data checks (`triggers`, `loading`) are exact while the script/resource checks reflect what is actually shipped in the archive.
+
+The same veaf-tools export powers **`miz2json`**, which dumps a mission to JSON so agents and skills can explore it with `jq` (or `python`) at a fraction of the cost of grepping the raw Lua — the structured query path used by `mission-explorer`, `map-mission` and `trace-logic`. See [`knowledge/vanilla/mission-json.md`](knowledge/vanilla/mission-json.md) for the JSON contract, query recipes and fallbacks.
 
 ---
 
