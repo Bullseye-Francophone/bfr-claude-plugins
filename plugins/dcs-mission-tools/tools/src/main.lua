@@ -65,6 +65,9 @@ end
 
 local function discoverProjects(path)
   path = path:gsub("[/\\]+$", "")
+  if path:match("%.miz$") and fs.exists(path) then
+    return { path }
+  end
   if fs.exists(fs.join(path, "src", "mission", "mission"))
      or fs.exists(fs.join(path, "mission")) then
     return { path }
@@ -87,6 +90,11 @@ local function runChecks(checkName, projectPath, allFindings)
     if selected and applicable then
       for _, finding in ipairs(check.run(project)) do
         finding.project = project.root
+        -- For a .miz there is no source tree on disk; drop the checks' hardcoded
+        -- "src/mission/mission" file hint so it does not mislead.
+        if project.isMiz and finding.file == "src/mission/mission" then
+          finding.file = nil
+        end
         allFindings[#allFindings + 1] = finding
       end
     end
