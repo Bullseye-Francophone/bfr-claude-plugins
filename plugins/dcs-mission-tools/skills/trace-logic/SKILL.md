@@ -6,26 +6,40 @@ description: Traces and explains a chain of DCS mission logic across layers - fr
 # Trace mission logic
 
 Goal: given a flag name, zone name, trigger comment or observed behavior,
-produce the complete causal chain with file:line citations.
+produce the complete causal chain with source citations.
 
 ## Method
 
-1. Locate the entry point with anchored greps on `src/mission/mission`
-   (never read it whole — delegate to the `mission-explorer` agent):
-   - flag: `a_set_flag(\"<name>\")`, `c_flag_is_true(\"<name>\")`,
-     `getUserFlag("<name>")`, `setUserFlag("<name>"`
-   - zone: exact name in `triggers.zones`, `ActivateZone(\"<name>\")`
-   - Use word-boundary anchoring: `Zone-1` must not match `Zone-10`.
-2. For each hit, identify the trigger index, then fetch its `trigrules[i].comment`,
-   `rules` (conditions) and `actions` — that is the editor-level truth.
-3. Follow `a_do_script` payloads into `src/scripts/*.lua`; for VMCT/MIST calls,
-   resolve semantics with the `lua-analyst` or `vmct-expert` agent and the
-   knowledge files (`${CLAUDE_PLUGIN_ROOT}/knowledge/`).
+1. Export the mission once and locate the entry point with jq (contract and recipes:
+   `${CLAUDE_PLUGIN_ROOT}/knowledge/vanilla/mission-json.md`; delegate to the
+   `mission-explorer` agent if you prefer):
+
+   ```sh
+   "${CLAUDE_PLUGIN_ROOT}/tools/miz2json.sh" <project-or-.miz> > mission.json
+   # triggers that reference the flag/zone in their conditions or actions
+   jq -c '.mission.trigrules[] | select(([.actions,.rules]|tostring)|test("<name>")) | {comment,predicate,rules,actions}' mission.json
+   # a trigger zone by name
+   jq -c '.mission.triggers.zones[] | select(.name|test("<name>"))' mission.json
+   ```
+
+   For completeness use the recursive sweep
+   `jq -r '[.. | strings | select(test("<name>";"i"))] | unique[]' mission.json` — a
+   flag can be set/read in places a single landmark query misses. Word-boundary anchor
+   (`Zone-1` must not match `Zone-10`).
+2. For each hit, read its `trigrules[i]` — `comment`, `rules` (conditions) and
+   `actions` are the editor-level truth (see
+   `${CLAUDE_PLUGIN_ROOT}/knowledge/vanilla/mission-file.md` → *trig vs trigrules*).
+3. Follow `a_do_script` / `a_do_script_file` payloads into `src/scripts/*.lua` (these
+   are on disk, NOT in the export — grep them directly); for VMCT/MIST calls, resolve
+   semantics with the `lua-analyst` or `vmct-expert` agent and the knowledge files
+   (`${CLAUDE_PLUGIN_ROOT}/knowledge/`).
 4. Check both directions: who sets the flag, who consumes it, what the actions
-   trigger downstream (other flags, zone activations, spawns).
+   trigger downstream (other flags, zone activations, spawns). Remember flags set
+   dynamically by scripts (`setUserFlag(ListeTriggers[i], …)`) resolve to no literal —
+   note them rather than assuming they are unused.
 
 ## Output
 
-A numbered chain, each step `what happens — where (file:line) — layer
+A numbered chain, each step `what happens — where (jq path or file:line) — layer
 (vanilla/MIST/VMCT)`, followed by "Conditions for this to fire" and, if the user
 reported a malfunction, the most likely break point with evidence.
