@@ -12,17 +12,22 @@
 ## Fields to neutralize
 
 `anonymize.scrub(text)` performs a reproducible, format-preserving
-substitution pass over the following fields:
+substitution pass and automates only the following four transforms:
 
-- Usernames / callsigns
-- UCID (client hash), Steam IDs, Discord IDs
-- Windows user directories: `C:\Users\<user>\...`
-- Saved Games instance paths: `Saved Games\<instance>`
-- IP addresses and public ports
+- Windows user directories: `C:\Users\<user>\...` → `C:\Users\PLAYER`
+- Saved Games instance paths: `Saved Games\<instance>` → `Saved Games\INSTANCE`
+- IPv4 addresses → `0.0.0.0`
+- 32-hex-character UCIDs → 32 zero digits
+
+**NOT automatically redacted** — contributor must hand-review and manually remove:
+
+- Usernames and callsigns (except those embedded in Windows paths)
+- Steam IDs and Discord IDs
+- Port numbers (IP addresses alone are transformed, but ports are not)
 - SRS / Discord / gRPC tokens
+- Any other personal data not caught by the regex patterns above
 
-Replacements are consistent placeholders (`PLAYER`, `INSTANCE`, `0.0.0.0`,
-32 zero digits for hex identifiers, etc.) that preserve the original
+Replacements are consistent placeholders that preserve the original
 shape of the data so downstream parsing/format assumptions in the
 reducer and its tests keep working.
 
