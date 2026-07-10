@@ -2,6 +2,8 @@ local M = {}
 
 local ENVELOPE = "^(%d%d%d%d%-%d%d%-%d%d %d%d:%d%d:%d%d%.%d+)%s+(%u+)%s+(%S+)%s+%((.-)%):%s?(.*)$"
 local VEAF = "^([%u][%u ]*)|([IWEDT])|(.-):%s(.*)$"
+local LUAERR = '%[string "([^"]*)"%]:(%d+): (.*)'
+local STACK = '^%s+%[string "([^"]*)"%]:(%d+):'
 
 local function parseVeaf(message)
   local module, level, middle, text = message:match(VEAF)
@@ -11,7 +13,17 @@ local function parseVeaf(message)
   return { module = module, level = level, fn = fn, id = id, message = text }
 end
 
+local function parseLuaError(message)
+  local file, line, text = message:match(LUAERR)
+  if not file then return nil end
+  return { file = file, line = tonumber(line), message = text }
+end
+
 function M.parseLine(line)
+  local stackFile, stackLine = line:match(STACK)
+  if stackFile then
+    return { kind = "stack", file = stackFile, line = tonumber(stackLine), raw = line }
+  end
   if line:find("^=== Log opened") then
     return { kind = "session", event = "opened", raw = line }
   end
@@ -25,6 +37,7 @@ function M.parseLine(line)
       thread = thread, message = message, raw = line,
     }
     record.veaf = parseVeaf(message)
+    record.luaerror = parseLuaError(message)
     return record
   end
   return { kind = "other", raw = line }

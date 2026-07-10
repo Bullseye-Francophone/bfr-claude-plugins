@@ -38,3 +38,13 @@ t.eq("parser: veaf module with space", spaced.veaf.module, "NAMED POINTS")
 
 local notVeaf = parser.parseLine("2026-06-30 18:01:59.236 INFO    SCRIPTING (Main): Mist version 4.5.128 loaded.")
 t.eq("parser: non-veaf scripting has no veaf field", notVeaf.veaf, nil)
+
+local scriptErr = parser.parseLine('2026-06-30 19:27:29.589 ERROR   SCRIPTING (Main): MIST|doScheduledFunctions|1528: Error in scheduled function: [string "l10n/DEFAULT/veaf-scripts.lua"]:32390: attempt to index local \'dcsUnit\' (a nil value)')
+t.eq("parser: lua error file", scriptErr.luaerror.file, "l10n/DEFAULT/veaf-scripts.lua")
+t.eq("parser: lua error line is a number", scriptErr.luaerror.line, 32390)
+t.contains("parser: lua error message", scriptErr.luaerror.message, "attempt to index local")
+
+local stack = parser.parseLine('\t[string "Scripts/World/EventHandlers.lua"]:13: in function <...>')
+t.eq("parser: stack continuation kind", stack.kind, "stack")
+t.eq("parser: stack continuation file", stack.file, "Scripts/World/EventHandlers.lua")
+t.eq("parser: stack continuation line", stack.line, 13)
