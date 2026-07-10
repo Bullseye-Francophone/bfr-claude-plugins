@@ -56,6 +56,11 @@ claude plugin validate .
 - Add assertions in `tools/tests/test_check_<name>.lua`.
 - Favor determinism and avoid false positives — a noisy check is worse than a missing one.
 
+## Log fixtures
+
+- Log fixtures live under `tools/tests/fixtures/logs/` and must be synthetic, or derived from a real log that was scrubbed with `tools/tests/anonymize.lua` and then hand-reviewed.
+- See `plugins/dcs-mission-tools/tools/tests/ANONYMIZATION.md` for the field list and the reproducible scrub command — never commit an un-reviewed log excerpt.
+
 ## Coding style
 
 - Match the surrounding code. The codebase favors clear, self-documenting names over comments.

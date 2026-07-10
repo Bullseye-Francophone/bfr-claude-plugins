@@ -1,0 +1,46 @@
+# Log anonymization
+
+## Hard rule
+
+**No real log excerpt is ever committed.** Every log fixture under
+`tools/tests/fixtures/logs/` must be either:
+
+- fully synthetic (hand-written to reproduce a specific case), or
+- derived from a real log that has been scrubbed with `anonymize.lua`
+  **and then hand-reviewed** before it is added to the repository.
+
+## Fields to neutralize
+
+`anonymize.scrub(text)` performs a reproducible, format-preserving
+substitution pass over the following fields:
+
+- Usernames / callsigns
+- UCID (client hash), Steam IDs, Discord IDs
+- Windows user directories: `C:\Users\<user>\...`
+- Saved Games instance paths: `Saved Games\<instance>`
+- IP addresses and public ports
+- SRS / Discord / gRPC tokens
+
+Replacements are consistent placeholders (`PLAYER`, `INSTANCE`, `0.0.0.0`,
+32 zero digits for hex identifiers, etc.) that preserve the original
+shape of the data so downstream parsing/format assumptions in the
+reducer and its tests keep working.
+
+## Reproducible command
+
+```bash
+./plugins/dcs-mission-tools/tools/bin/lua-macos-arm64 \
+  plugins/dcs-mission-tools/tools/tests/anonymize.lua < real.log > fixtures/logs/derived.log
+```
+
+`anonymize.lua` is usable both as a library (`require("anonymize")`,
+see `tools/tests/test_logreduce_cli.lua`) and, when invoked directly as
+above, as a CLI filter that reads stdin and writes scrubbed output to
+stdout.
+
+## Best-effort — always hand-review
+
+`scrub` is a best-effort regex pass. It does not understand every
+field that could carry personal data (custom callsigns, freeform chat
+text, unusual path layouts, etc.). **Always read the scrubbed output
+before committing it** and manually redact anything the pass missed.
