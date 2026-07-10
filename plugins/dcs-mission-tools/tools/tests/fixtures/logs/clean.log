@@ -1,0 +1,6 @@
+=== Log opened UTC 2026-01-01 12:00:00
+2026-01-01 12:00:00.100 INFO    APP (Main): Command line: "D:\DCS\bin\DCS_server.exe" --norender --server -w DEMO
+2026-01-01 12:00:00.200 INFO    APP (Main): DCS/2.9.0.0 (x86_64; MT; Windows NT 10.0)
+2026-01-01 12:00:01.000 INFO    SCRIPTING (Main): Mist version 4.5.0-DEMO loaded.
+2026-01-01 12:00:01.100 INFO    SCRIPTING (Main): VEAF|I|10: init - veafSpawn
+=== Log closed.
