@@ -25,11 +25,33 @@ function M.new(opts)
 end
 
 function Reducer:add(record)
+  if record.kind == "stack" then
+    if self.lastEvent then
+      self.lastEvent.stack = self.lastEvent.stack or {}
+      self.lastEvent.stack[#self.lastEvent.stack + 1] = record.raw
+    end
+    return nil
+  end
   if record.kind == "session" then
     self.session[record.event] = true
     return nil
   end
   if record.kind ~= "log" then return nil end
+  if record.subsystem == "APP" and record.message:find("Command line:") then
+    self.session.role = record.message:find("%-%-server") and "server" or "client"
+  end
+  if record.subsystem == "APP" then
+    local version = record.message:match("^DCS/(%S+)")
+    if version then self.session.dcs_version = version end
+  end
+  if record.subsystem == "SCRIPTING" then
+    local mist = record.message:match("^Mist version (%S+) loaded")
+    if mist then self.veaf.mist = mist end
+    if record.veaf then
+      local module = record.veaf.message:match("^init %- (%S+)")
+      if module then self.veaf.modules_loaded[#self.veaf.modules_loaded + 1] = module end
+    end
+  end
   local class = catalogue.classify(record)
   self.counts[class.severity] = self.counts[class.severity] + 1
 
@@ -57,6 +79,7 @@ function Reducer:add(record)
     }
     self.groups[key] = group
     self.order[#self.order + 1] = group
+    self.lastEvent = group
   end
   group.count = group.count + 1
   group.last_ts = record.ts
@@ -66,6 +89,7 @@ function Reducer:add(record)
 end
 
 function Reducer:digest()
+  if not self.session.role then self.session.role = "unknown" end
   local events = {}
   for _, group in ipairs(self.order) do events[#events + 1] = group end
   table.sort(events, function(a, b)
