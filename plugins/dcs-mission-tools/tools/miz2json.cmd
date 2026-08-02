@@ -23,28 +23,42 @@ if not defined VT set "VT=%DIR%bin\windows-x64\veaf-tools.exe"
 if not exist "%VT%" if not defined VEAF_TOOLS set "VT=veaf-tools"
 
 set "INPUT=%~1"
-if "%INPUT%"=="" (
-  echo usage: miz2json.cmd [--pretty] ^<mission-folder-or-.miz^> [output.json] 1>&2
-  exit /b 2
-)
+if "%INPUT%"=="" goto :usage
 set "OUT=%~2"
+if not "%OUT%"=="" goto :exportToFile
 
-if not "%OUT%"=="" (
-  "%VT%" export "%INPUT%" "%OUT%" --format json %COMPACT% --no-pause >nul 2>&1
-  if errorlevel 1 (
-    echo miz2json: veaf-tools export failed for %INPUT% 1>&2
-    exit /b 1
-  )
-  exit /b 0
-)
-
-set "TMP=%TEMP%\miz2json-%RANDOM%%RANDOM%%RANDOM%.json"
-"%VT%" export "%INPUT%" "%TMP%" --format json %COMPACT% --no-pause >nul 2>&1
-if errorlevel 1 (
-  del "%TMP%" 2>nul
-  echo miz2json: veaf-tools export failed for %INPUT% 1>&2
-  exit /b 1
-)
-type "%TMP%"
-del "%TMP%" 2>nul
+rem Every exit is a top-level `exit /b` reached by goto: an `exit /b` nested in a
+rem parenthesized block did not carry its code out, so a failed export answered 0.
+set "TEMP_EXPORT=%TEMP%\miz2json-%RANDOM%%RANDOM%%RANDOM%.json"
+"%VT%" export "%INPUT%" "%TEMP_EXPORT%" --format json %COMPACT% --no-pause >nul 2>&1
+if errorlevel 1 goto :temporaryExportFailed
+if not exist "%TEMP_EXPORT%" goto :temporaryExportFailed
+set "EXPORTED_BYTES=0"
+for %%E in ("%TEMP_EXPORT%") do set "EXPORTED_BYTES=%%~zE"
+if not defined EXPORTED_BYTES goto :temporaryExportFailed
+if "%EXPORTED_BYTES%"=="0" goto :temporaryExportFailed
+type "%TEMP_EXPORT%"
+del "%TEMP_EXPORT%" 2>nul
 exit /b 0
+
+:exportToFile
+"%VT%" export "%INPUT%" "%OUT%" --format json %COMPACT% --no-pause >nul 2>&1
+if errorlevel 1 goto :exportFailed
+if not exist "%OUT%" goto :exportFailed
+set "EXPORTED_BYTES=0"
+for %%E in ("%OUT%") do set "EXPORTED_BYTES=%%~zE"
+if not defined EXPORTED_BYTES goto :exportFailed
+if "%EXPORTED_BYTES%"=="0" goto :exportFailed
+exit /b 0
+
+:temporaryExportFailed
+del "%TEMP_EXPORT%" 2>nul
+goto :exportFailed
+
+:exportFailed
+echo miz2json: veaf-tools export failed for %INPUT% 1>&2
+exit /b 1
+
+:usage
+echo usage: miz2json.cmd [--pretty] ^<mission-folder-or-.miz^> [output.json] 1>&2
+exit /b 2
