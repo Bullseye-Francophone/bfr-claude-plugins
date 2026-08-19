@@ -27,11 +27,14 @@ local dirContent, dirErr = fs.readAll(dir)
 t.eq("fs: readAll on directory returns nil", dirContent, nil)
 t.check("fs: readAll on directory returns an error message", type(dirErr) == "string")
 
-f = io.open(dir .. '/wei"rd.txt', "w") f:write("q") f:close()
-local foundQuoted = false
-for _, path in ipairs(fs.listFiles(dir)) do
-  if path:find('wei"rd.txt', 1, true) then foundQuoted = true end
+local quotesAllowedInFileNames = package.config:sub(1, 1) ~= "\\"
+if quotesAllowedInFileNames then
+  f = io.open(dir .. '/wei"rd.txt', "w") f:write("q") f:close()
+  local foundQuoted = false
+  for _, path in ipairs(fs.listFiles(dir)) do
+    if path:find('wei"rd.txt', 1, true) then foundQuoted = true end
+  end
+  t.check("fs: listFiles handles quotes in names", foundQuoted)
 end
-t.check("fs: listFiles handles quotes in names", foundQuoted)
 
 os.execute('rm -rf "' .. dir .. '"')
