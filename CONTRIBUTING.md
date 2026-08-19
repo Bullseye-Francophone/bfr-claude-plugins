@@ -22,6 +22,12 @@ plugins/dcs-mission-tools/
 
 ## Development setup
 
+On **Windows**, clone with long paths enabled — the test fixtures vendor a `node_modules` tree deep enough that a default clone stops midway, leaving a silently incomplete checkout (the vendored interpreters under `tools/bin/` are among the files that go missing):
+
+```bash
+git clone -c core.longpaths=true https://github.com/Bullseye-Francophone/bfr-claude-plugins.git
+```
+
 mizlint is pure Lua 5.4. The interpreters are vendored under `tools/bin/`, so there is nothing to install on the bundled platforms (Windows, Linux x64, macOS arm64). On other platforms, install a `lua` 5.4 on your `PATH`.
 
 ## Running the tests
@@ -37,7 +43,16 @@ Run from the **repository root** (the fixtures use repo-root-relative paths):
 # Linux x64: swap the interpreter for ./plugins/dcs-mission-tools/tools/bin/lua-linux-x64
 ```
 
+```bash
+# Windows x64 (Git Bash or cmd)
+./plugins/dcs-mission-tools/tools/bin/windows-x64/lua54.exe \
+  plugins/dcs-mission-tools/tools/tests/run.lua \
+  plugins/dcs-mission-tools/tools/tests/test_*.lua
+```
+
 The suite is dependency-free and must end with `N passed, 0 failed`.
+
+**Known limitation on Windows:** the run currently stops early, at `test_filesystem.lua`, and the files after it never execute — the suite assumes a POSIX shell (`io.popen` exit-code capture, `chmod`, `mkdir -p`, `cp`, and a filename containing a double quote, which Windows forbids). A Windows run is therefore a partial one, not a green light.
 
 ## Validating the plugin
 
