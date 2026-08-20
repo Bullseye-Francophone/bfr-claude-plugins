@@ -29,6 +29,7 @@ else
   case "$(uname -s)-$(uname -m)" in
     Darwin-arm64)  VT="$DIR/bin/macos-arm64/veaf-tools" ;;
     Linux-x86_64)  VT="$DIR/bin/linux-x64/veaf-tools" ;;
+    MINGW*|MSYS*|CYGWIN*) VT="$DIR/bin/windows-x64/veaf-tools.exe" ;;
     *)             VT="" ;;
   esac
   if [ -z "$VT" ] || [ ! -x "$VT" ]; then
@@ -49,7 +50,7 @@ fi
 OUT="$2"
 
 if [ -n "$OUT" ]; then
-  if "$VT" export "$INPUT" "$OUT" --format json $COMPACT --no-pause >/dev/null 2>&1; then
+  if "$VT" export "$INPUT" "$OUT" --format json $COMPACT --no-pause >/dev/null 2>&1 && [ -s "$OUT" ]; then
     exit 0
   fi
   echo "miz2json: veaf-tools export failed for $INPUT" >&2
@@ -58,7 +59,7 @@ fi
 
 TMP="$(mktemp "${TMPDIR:-/tmp}/miz2json.XXXXXX")" || { echo "miz2json: mktemp failed" >&2; exit 1; }
 trap 'rm -f "$TMP"' EXIT INT TERM
-if "$VT" export "$INPUT" "$TMP" --format json $COMPACT --no-pause >/dev/null 2>&1; then
+if "$VT" export "$INPUT" "$TMP" --format json $COMPACT --no-pause >/dev/null 2>&1 && [ -s "$TMP" ]; then
   cat "$TMP"
   exit 0
 fi

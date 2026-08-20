@@ -16,7 +16,7 @@ navigation entry points, **not an exhaustive whitelist** — see *Exhaustiveness
 ## Export
 
 ```sh
-"${CLAUDE_PLUGIN_ROOT}/tools/miz2json.sh" <mission-folder-or-.miz> > mission.json   # Windows: miz2json.cmd
+"${CLAUDE_PLUGIN_ROOT}/tools/miz2json.sh" <mission-folder-or-.miz> > mission.json   # Windows: miz2json.cmd, or miz2json.sh under Git-Bash
 ```
 
 - Input: a project folder (containing `src/mission/`), a `src/mission` folder, or a
