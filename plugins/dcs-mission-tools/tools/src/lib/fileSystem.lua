@@ -73,4 +73,14 @@ function M.listDirs(dir)
   return popenLines('find ' .. quoted(dir) .. ' -mindepth 1 -maxdepth 1 -type d 2>/dev/null')
 end
 
+-- Recursively delete a directory (no error if it does not exist). On Windows
+-- the path is normalised to backslashes: rmdir mis-reads forward slashes.
+function M.removeTree(path)
+  if M.isWindows then
+    os.execute('rmdir /s /q ' .. quoted((path:gsub("/", "\\"))) .. ' >nul 2>nul')
+  else
+    os.execute('rm -rf ' .. quoted(path) .. ' >/dev/null 2>&1')
+  end
+end
+
 return M
