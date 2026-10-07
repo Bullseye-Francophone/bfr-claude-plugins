@@ -37,4 +37,7 @@ if quotesAllowedInFileNames then
   t.check("fs: listFiles handles quotes in names", foundQuoted)
 end
 
-os.execute('rm -rf "' .. dir .. '"')
+fs.removeTree(dir)
+t.eq("fs: removeTree deletes the whole tree", fs.exists(dir .. "/sub/b.lua") or fs.isDir(dir), false)
+fs.removeTree(dir)
+t.check("fs: removeTree on a missing dir is a no-op", not fs.isDir(dir))
