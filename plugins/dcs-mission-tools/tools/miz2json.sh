@@ -57,10 +57,10 @@ if [ -n "$OUT" ]; then
   exit 1
 fi
 
-TMP="$(mktemp "${TMPDIR:-/tmp}/miz2json.XXXXXX")" || { echo "miz2json: mktemp failed" >&2; exit 1; }
-trap 'rm -f "$TMP"' EXIT INT TERM
-if "$VT" export "$INPUT" "$TMP" --format json $COMPACT --no-pause >/dev/null 2>&1 && [ -s "$TMP" ]; then
-  cat "$TMP"
+TMPJSON="$(mktemp "${TMPDIR:-/tmp}/miz2json.XXXXXX")" || { echo "miz2json: mktemp failed" >&2; exit 1; }
+trap 'rm -f "$TMPJSON"' EXIT INT TERM
+if "$VT" export "$INPUT" "$TMPJSON" --format json $COMPACT --no-pause >/dev/null 2>&1 && [ -s "$TMPJSON" ]; then
+  cat "$TMPJSON"
   exit 0
 fi
 echo "miz2json: veaf-tools export failed for $INPUT" >&2
