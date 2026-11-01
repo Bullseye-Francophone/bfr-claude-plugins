@@ -1,7 +1,7 @@
 local t = require("helpers")
 local loader = require("lib.missionLoader")
 
-local tmp = os.tmpname()
+local tmp = t.tempPath()
 local f = io.open(tmp, "w")
 f:write('myTable = {\n    ["a"] = "hello",\n    [1] = 2,\n}\n')
 f:close()
