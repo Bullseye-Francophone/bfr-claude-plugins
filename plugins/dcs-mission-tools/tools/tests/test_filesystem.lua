@@ -1,10 +1,8 @@
 local t = require("helpers")
 local fs = require("lib.fileSystem")
 
-local tmp = os.tmpname()
-os.remove(tmp)
-local dir = tmp .. "_fsdir"
-os.execute('mkdir -p "' .. dir .. '/sub"')
+local dir = t.tempPath("_fsdir")
+t.makeDirs(dir .. "/sub")
 local f = io.open(dir .. "/a.txt", "w") f:write("hello") f:close()
 f = io.open(dir .. "/sub/b.lua", "w") f:write("x") f:close()
 
@@ -35,6 +33,9 @@ if quotesAllowedInFileNames then
     if path:find('wei"rd.txt', 1, true) then foundQuoted = true end
   end
   t.check("fs: listFiles handles quotes in names", foundQuoted)
+else
+  t.skip("fs: listFiles handles quotes in names",
+    "Windows forbids '\"' in file names, so such a file cannot exist there")
 end
 
-os.execute('rm -rf "' .. dir .. '"')
+t.removeTree(dir)

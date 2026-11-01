@@ -3,22 +3,21 @@ local t = require("helpers")
 local TOOLS_DIR = "plugins/dcs-mission-tools/tools"
 local FIXTURE = TOOLS_DIR .. "/tests/fixtures/clean"
 
-local sandbox = os.tmpname()
-os.remove(sandbox)
-sandbox = sandbox .. "_wrappers"
-
-local function shell(command)
-  local process = io.popen(command .. " 2>&1; echo EXIT:$?")
-  local output = process:read("*a")
-  process:close()
-  return output, tonumber(output:match("EXIT:(%d+)"))
+if not t.hasPosixShell() then
+  t.skip("wrappers: miz2json.sh / mizlint.sh behaviour",
+    "no 'sh' on PATH — run the suite from Git Bash (or MSYS2) to test the POSIX wrappers")
+  return
 end
 
+local sandbox = t.tempPath("_wrappers")
+
+local shell = t.runPosix
+
 local function writeExecutable(path, body)
-  local file = io.open(path, "w")
+  local file = io.open(path, "wb")
   file:write(body)
   file:close()
-  os.execute('chmod +x "' .. path .. '"')
+  shell('chmod +x "' .. path .. '"')
 end
 
 local function readFile(path)
@@ -29,9 +28,9 @@ local function readFile(path)
   return content
 end
 
-os.execute('mkdir -p "' .. sandbox .. '/bin/windows-x64" "' .. sandbox .. '/bin/macos-arm64" "' ..
+shell('mkdir -p "' .. sandbox .. '/bin/windows-x64" "' .. sandbox .. '/bin/macos-arm64" "' ..
   sandbox .. '/bin/linux-x64" "' .. sandbox .. '/stubPath"')
-os.execute('cp "' .. TOOLS_DIR .. '/miz2json.sh" "' .. TOOLS_DIR .. '/mizlint.sh" "' .. sandbox .. '/"')
+shell('cp "' .. TOOLS_DIR .. '/miz2json.sh" "' .. TOOLS_DIR .. '/mizlint.sh" "' .. sandbox .. '/"')
 
 writeExecutable(sandbox .. "/stubPath/uname", [[#!/bin/sh
 case "$1" in
@@ -59,7 +58,7 @@ writeExecutable(sandbox .. "/failingExport", "#!/bin/sh\nexit 1\n")
 writeExecutable(sandbox .. "/silentExport", "#!/bin/sh\nexit 0\n")
 
 local function withPlatform(system, machine, command)
-  return 'env PATH="' .. sandbox .. '/stubPath:/usr/bin:/bin" VEAF_TOOLS= ' ..
+  return 'env PATH="$(cd "' .. sandbox .. '/stubPath" && pwd):/usr/bin:/bin" VEAF_TOOLS= ' ..
     'STUB_UNAME_SYSTEM="' .. system .. '" STUB_UNAME_MACHINE="' .. machine .. '" ' .. command
 end
 
@@ -110,4 +109,4 @@ local silentStdout, silentStdoutCode = exportWith("silentExport", '"' .. FIXTURE
 t.eq("wrappers: miz2json.sh refuses to claim success on an empty stdout export", silentStdoutCode, 1)
 t.check("wrappers: a failed stdout export emits no JSON", not silentStdout:find("{", 1, true))
 
-os.execute('rm -rf "' .. sandbox .. '"')
+shell('rm -rf "' .. sandbox .. '"')

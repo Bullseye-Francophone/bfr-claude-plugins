@@ -50,9 +50,14 @@ Run from the **repository root** (the fixtures use repo-root-relative paths):
   plugins/dcs-mission-tools/tools/tests/test_*.lua
 ```
 
-The suite is dependency-free and must end with `N passed, 0 failed`.
+The suite is dependency-free and must end with `N passed, 0 failed` (followed by `, K skipped` when some assertions do not apply to the platform; each skip is printed as `SKIP:` with its reason).
 
-**Known limitation on Windows:** the run currently stops early, at `test_filesystem.lua`, and the files after it never execute — the suite assumes a POSIX shell (`io.popen` exit-code capture, `chmod`, `mkdir -p`, `cp`, and a filename containing a double quote, which Windows forbids). A Windows run is therefore a partial one, not a green light.
+**Known limitation on Windows:** the whole suite runs, through portable helpers in `tools/tests/helpers.lua` (exit codes, temp paths, directory creation and removal). Two things are skipped, explicitly:
+
+- `fs: listFiles handles quotes in names` — always skipped: Windows forbids `"` in file names.
+- `test_wrappers.lua` (the `miz2json.sh` / `mizlint.sh` launchers) needs an `sh` on `PATH`. Run the suite from **Git Bash** (or MSYS2) to cover it; from cmd or PowerShell it is reported as skipped. The `.cmd` launchers have no automated test.
+
+A Windows run is green only with those skips; the launcher tests still need a Git Bash run before calling a change done.
 
 ## Validating the plugin
 
