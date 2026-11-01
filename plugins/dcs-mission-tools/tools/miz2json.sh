@@ -12,10 +12,20 @@
 # (veaf-tools prints a progress banner, so stdout mode routes the export through
 # a temp file and cats it — a direct pipe would interleave the banner).
 #
+# veaf-tools' own output (banner on success, traceback / PyInstaller bootloader
+# error on failure) is captured to a temp log, never shown on success. When the
+# export fails, stderr gets "miz2json: veaf-tools export failed for <input>
+# (exit N)" followed by the last $MIZ2JSON_LOG_LINES (default 20) lines of that
+# log, indented — so a failure carries its real cause instead of being swallowed.
+#
 # veaf-tools resolution mirrors mizlint.sh: $VEAF_TOOLS override, then the
 # vendored bin/<platform>/ binary, then `veaf-tools` on PATH. Exit 3 when none is
 # available — callers should then fall back to anchored grep on the raw
 # src/mission/mission (see knowledge/vanilla/mission-json.md, "Fallback ladder").
+# Exit codes: 0 success, 1 export failed, 2 usage, 3 no veaf-tools.
+#
+# Never assign TMP / TEMP / TMPDIR here: veaf-tools.exe (PyInstaller) unpacks
+# itself under %TMP%, and Git-Bash exports them to the Windows child (PR #8).
 DIR="$(cd "$(dirname "$0")" && pwd)"
 
 COMPACT="--compact"
@@ -49,19 +59,51 @@ if [ -z "$INPUT" ]; then
 fi
 OUT="$2"
 
-if [ -n "$OUT" ]; then
-  if "$VT" export "$INPUT" "$OUT" --format json $COMPACT --no-pause >/dev/null 2>&1 && [ -s "$OUT" ]; then
-    exit 0
+TMPJSON=""
+VTLOG=""
+trap 'rm -f ${TMPJSON:+"$TMPJSON"} ${VTLOG:+"$VTLOG"}' EXIT
+trap 'exit 1' INT TERM
+
+case "$MIZ2JSON_LOG_LINES" in
+  ''|*[!0-9]*) LOGLINES=20 ;;
+  *) LOGLINES="$MIZ2JSON_LOG_LINES" ;;
+esac
+
+# Capture veaf-tools' stdout+stderr; if no log can be created, still run (blind).
+VTLOG="$(mktemp "${TMPDIR:-/tmp}/miz2json-log.XXXXXX" 2>/dev/null)" || VTLOG=""
+
+# export_to <path>: run veaf-tools; 0 only if it exits 0 AND <path> is non-empty.
+# On failure, report the exit code and the tail of veaf-tools' output on stderr.
+export_to() {
+  "$VT" export "$INPUT" "$1" --format json $COMPACT --no-pause >"${VTLOG:-/dev/null}" 2>&1
+  VTCODE=$?
+  if [ "$VTCODE" -eq 0 ] && [ -s "$1" ]; then
+    return 0
   fi
-  echo "miz2json: veaf-tools export failed for $INPUT" >&2
+  if [ "$VTCODE" -eq 0 ]; then
+    echo "miz2json: veaf-tools export failed for $INPUT (exit 0 but no JSON written)" >&2
+  else
+    echo "miz2json: veaf-tools export failed for $INPUT (exit $VTCODE)" >&2
+  fi
+  if [ -z "$VTLOG" ]; then
+    echo "  (veaf-tools output not captured: mktemp failed)" >&2
+  elif [ -s "$VTLOG" ]; then
+    echo "miz2json: veaf-tools output (last $LOGLINES lines):" >&2
+    tail -n "$LOGLINES" "$VTLOG" | tr -d '\r' | sed 's/^/  /' >&2
+  else
+    echo "  (veaf-tools printed nothing)" >&2
+  fi
+  return 1
+}
+
+if [ -n "$OUT" ]; then
+  export_to "$OUT" && exit 0
   exit 1
 fi
 
 TMPJSON="$(mktemp "${TMPDIR:-/tmp}/miz2json.XXXXXX")" || { echo "miz2json: mktemp failed" >&2; exit 1; }
-trap 'rm -f "$TMPJSON"' EXIT INT TERM
-if "$VT" export "$INPUT" "$TMPJSON" --format json $COMPACT --no-pause >/dev/null 2>&1 && [ -s "$TMPJSON" ]; then
+if export_to "$TMPJSON"; then
   cat "$TMPJSON"
   exit 0
 fi
-echo "miz2json: veaf-tools export failed for $INPUT" >&2
 exit 1
