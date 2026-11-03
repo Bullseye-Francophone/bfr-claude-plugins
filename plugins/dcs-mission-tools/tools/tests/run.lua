@@ -11,5 +11,6 @@ for _, file in ipairs(arg) do
   end
 end
 
-io.write(string.format("\n%d passed, %d failed\n", helpers.passed, helpers.failed))
+local skippedNote = helpers.skipped > 0 and string.format(", %d skipped", helpers.skipped) or ""
+io.write(string.format("\n%d passed, %d failed%s\n", helpers.passed, helpers.failed, skippedNote))
 os.exit(helpers.failed == 0 and 0 or 1)

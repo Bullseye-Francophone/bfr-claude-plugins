@@ -1,7 +1,7 @@
 local t = require("helpers")
 local loader = require("lib.missionLoader")
 
-local tmp = os.tmpname()
+local tmp = t.tempPath()
 local f = io.open(tmp, "w")
 f:write('myTable = {\n    ["a"] = "hello",\n    [1] = 2,\n}\n')
 f:close()
@@ -43,9 +43,8 @@ f = io.open(probeFile, "w")
 f:write("package.path = ", string.format("%q", srcDir .. "?.lua;"), " .. package.path\n",
   'print(require("lib.missionLoader").tempPath("p"))\n')
 f:close()
-local probe = '"' .. arg[-1] .. '" "' .. probeFile .. '"'
-if package.config:sub(1, 1) == "\\" then probe = '"' .. probe .. '"' end -- cmd /c strips one pair
-local fromOne = io.popen(probe):read("*l")
-local fromTwo = io.popen(probe):read("*l")
+local probe = t.luaCommand() .. ' "' .. probeFile .. '"'
+local fromOne = t.run(probe):match("[^\r\n]+")
+local fromTwo = t.run(probe):match("[^\r\n]+")
 os.remove(probeFile)
 t.check("loader: tempPath differs across processes", fromOne ~= nil and fromOne ~= fromTwo, tostring(fromOne))

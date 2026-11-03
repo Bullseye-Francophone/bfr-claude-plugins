@@ -3,22 +3,21 @@ local t = require("helpers")
 local TOOLS_DIR = "plugins/dcs-mission-tools/tools"
 local FIXTURE = TOOLS_DIR .. "/tests/fixtures/clean"
 
-local sandbox = os.tmpname()
-os.remove(sandbox)
-sandbox = sandbox .. "_wrappers"
-
-local function shell(command)
-  local process = io.popen(command .. " 2>&1; echo EXIT:$?")
-  local output = process:read("*a")
-  process:close()
-  return output, tonumber(output:match("EXIT:(%d+)"))
+if not t.hasPosixShell() then
+  t.skip("wrappers: miz2json.sh / mizlint.sh behaviour",
+    "no 'sh' on PATH — run the suite from Git Bash (or MSYS2) to test the POSIX wrappers")
+  return
 end
 
+local sandbox = t.tempPath("_wrappers")
+
+local shell = t.runPosix
+
 local function writeExecutable(path, body)
-  local file = io.open(path, "w")
+  local file = io.open(path, "wb")
   file:write(body)
   file:close()
-  os.execute('chmod +x "' .. path .. '"')
+  shell('chmod +x "' .. path .. '"')
 end
 
 local function readFile(path)
@@ -29,9 +28,9 @@ local function readFile(path)
   return content
 end
 
-os.execute('mkdir -p "' .. sandbox .. '/bin/windows-x64" "' .. sandbox .. '/bin/macos-arm64" "' ..
+shell('mkdir -p "' .. sandbox .. '/bin/windows-x64" "' .. sandbox .. '/bin/macos-arm64" "' ..
   sandbox .. '/bin/linux-x64" "' .. sandbox .. '/stubPath"')
-os.execute('cp "' .. TOOLS_DIR .. '/miz2json.sh" "' .. TOOLS_DIR .. '/mizlint.sh" "' .. sandbox .. '/"')
+shell('cp "' .. TOOLS_DIR .. '/miz2json.sh" "' .. TOOLS_DIR .. '/mizlint.sh" "' .. sandbox .. '/"')
 
 writeExecutable(sandbox .. "/stubPath/uname", [[#!/bin/sh
 case "$1" in
@@ -59,7 +58,7 @@ writeExecutable(sandbox .. "/failingExport", "#!/bin/sh\nexit 1\n")
 writeExecutable(sandbox .. "/silentExport", "#!/bin/sh\nexit 0\n")
 
 local function withPlatform(system, machine, command)
-  return 'env PATH="' .. sandbox .. '/stubPath:/usr/bin:/bin" VEAF_TOOLS= ' ..
+  return 'env PATH="$(cd "' .. sandbox .. '/stubPath" && pwd):/usr/bin:/bin" VEAF_TOOLS= ' ..
     'STUB_UNAME_SYSTEM="' .. system .. '" STUB_UNAME_MACHINE="' .. machine .. '" ' .. command
 end
 
@@ -109,5 +108,51 @@ t.eq("wrappers: miz2json.sh refuses to claim success without an output file", si
 local silentStdout, silentStdoutCode = exportWith("silentExport", '"' .. FIXTURE .. '"')
 t.eq("wrappers: miz2json.sh refuses to claim success on an empty stdout export", silentStdoutCode, 1)
 t.check("wrappers: a failed stdout export emits no JSON", not silentStdout:find("{", 1, true))
+t.contains("wrappers: miz2json.sh says when the export wrote no JSON", silentStdout, "exit 0 but no JSON written")
 
-os.execute('rm -rf "' .. sandbox .. '"')
+-- A failing veaf-tools must have its exit code and its own output relayed on
+-- stderr (PR #8: a PyInstaller bootloader error was swallowed by >/dev/null).
+writeExecutable(sandbox .. "/noisyFailingExport", [[#!/bin/sh
+echo "veaf-tools banner"
+echo "[PYI-42:ERROR] Could not create temporary directory!" >&2
+exit 127
+]])
+writeExecutable(sandbox .. "/noisyExport", [[#!/bin/sh
+echo "veaf-tools banner"
+echo "progress noise" >&2
+printf '{"exported":true}' > "$3"
+]])
+os.execute('mkdir -p "' .. sandbox .. '/tmpdir"')
+
+-- stderrOf: run miz2json.sh with stdout sent to a file, return (stderr, code, stdout).
+-- The brace group keeps stdout in the file while shell()'s 2>&1 brings stderr back.
+local function stderrOf(tool, arguments)
+  local stdoutFile = sandbox .. "/captured-stdout"
+  os.remove(stdoutFile)
+  local stderr, code = shell('{ env TMPDIR="' .. sandbox .. '/tmpdir" VEAF_TOOLS="' .. sandbox .. '/' .. tool .. '" ' ..
+    'sh "' .. sandbox .. '/miz2json.sh" ' .. arguments .. ' >"' .. stdoutFile .. '"; }')
+  return (stderr:gsub("EXIT:%d+%s*$", "")), code, readFile(stdoutFile) or ""
+end
+
+local fileModeErr, fileModeCode = stderrOf("noisyFailingExport", '"' .. FIXTURE .. '" "' .. sandbox .. '/noisy.json"')
+t.eq("wrappers: miz2json.sh file mode still exits 1 when veaf-tools fails", fileModeCode, 1)
+t.contains("wrappers: miz2json.sh file mode relays veaf-tools' exit code", fileModeErr, "(exit 127)")
+t.contains("wrappers: miz2json.sh file mode relays veaf-tools' stderr", fileModeErr,
+  "[PYI-42:ERROR] Could not create temporary directory!")
+t.contains("wrappers: miz2json.sh file mode relays veaf-tools' stdout", fileModeErr, "veaf-tools banner")
+
+local stdoutModeErr, stdoutModeCode, stdoutModeOut = stderrOf("noisyFailingExport", '"' .. FIXTURE .. '"')
+t.eq("wrappers: miz2json.sh stdout mode still exits 1 when veaf-tools fails", stdoutModeCode, 1)
+t.contains("wrappers: miz2json.sh stdout mode relays veaf-tools' exit code", stdoutModeErr, "(exit 127)")
+t.contains("wrappers: miz2json.sh stdout mode relays veaf-tools' stderr", stdoutModeErr,
+  "[PYI-42:ERROR] Could not create temporary directory!")
+t.eq("wrappers: miz2json.sh stdout mode keeps the failure off stdout", stdoutModeOut, "")
+local quietErr, quietCode, quietOut = stderrOf("noisyExport", '"' .. FIXTURE .. '"')
+t.eq("wrappers: miz2json.sh stdout mode succeeds despite veaf-tools noise", quietCode, 0)
+t.eq("wrappers: miz2json.sh stdout mode emits only the JSON", quietOut, '{"exported":true}')
+t.eq("wrappers: miz2json.sh stays silent on stderr when the export succeeds", quietErr, "")
+
+local leftovers = shell('ls -A "' .. sandbox .. '/tmpdir"')
+t.eq("wrappers: miz2json.sh leaves no temp file behind", (leftovers:gsub("EXIT:%d+%s*$", "")), "")
+
+shell('rm -rf "' .. sandbox .. '"')
