@@ -38,4 +38,7 @@ else
     "Windows forbids '\"' in file names, so such a file cannot exist there")
 end
 
-t.removeTree(dir)
+fs.removeTree(dir)
+t.eq("fs: removeTree deletes the whole tree", fs.exists(dir .. "/sub/b.lua") or fs.isDir(dir), false)
+fs.removeTree(dir)
+t.check("fs: removeTree on a missing dir is a no-op", not fs.isDir(dir))

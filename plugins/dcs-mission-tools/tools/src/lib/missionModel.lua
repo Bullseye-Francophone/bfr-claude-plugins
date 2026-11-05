@@ -43,13 +43,6 @@ local function detectVmctMarkers(dictionary)
   return type(predicate) == "string" and predicate:find("-- scripts", 1, true) ~= nil
 end
 
-local extractCounter = 0
-local function tempExtractDir()
-  local dir = os.getenv("TEMP") or os.getenv("TMP") or os.getenv("TMPDIR") or "/tmp"
-  extractCounter = extractCounter + 1
-  return dir .. "/mizlint-miz-" .. tostring(os.time()) .. "-" .. tostring(extractCounter)
-end
-
 -- An extracted VEAF mission project: src/mission tree + src/scripts + node_modules.
 local function loadFolder(root)
   local missionDir = fs.join(root, "src", "mission")
@@ -124,10 +117,14 @@ end
 -- makes a built artifact "complete"; the rest of l10n/DEFAULT is sounds/images.
 -- Module-specific resources (kneeboards, A-10 radio presets) live outside
 -- l10n/DEFAULT and are intentionally ignored here.
+-- The extraction dir is deleted before returning (also when the export fails):
+-- everything the checks need is read into memory here, so missionDir, l10nDir
+-- and scriptFiles only serve as labels afterwards.
 local function loadMiz(mizPath)
-  local extractDir = tempExtractDir()
+  local extractDir = loader.tempPath("mizlint-miz")
   local exported, err = loader.exportTables(mizPath, extractDir)
   if not exported then
+    fs.removeTree(extractDir)
     return nil, "cannot read " .. mizPath .. ": " .. (err or "veaf-tools export failed")
   end
 
@@ -143,6 +140,7 @@ local function loadMiz(mizPath)
       l10nFiles[base] = true
     end
   end
+  fs.removeTree(extractDir)
 
   return {
     isMiz = true,
