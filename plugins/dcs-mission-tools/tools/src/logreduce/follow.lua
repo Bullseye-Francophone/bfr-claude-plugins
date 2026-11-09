@@ -5,12 +5,14 @@ local Follower = {}
 Follower.__index = Follower
 
 local SHORTEST_DETECTABLE_PREFIX = 3
+local FILE_HEAD_LENGTH = 64
 
 local function resetDecoding(follower)
   follower.position = 0
   follower.lineBuffer = ""
   follower.undecodedBytes = ""
   follower.encoding = nil
+  follower.fileHead = ""
 end
 
 function M.new(path)
@@ -45,13 +47,20 @@ end
 
 function Follower:poll()
   local handle = io.open(self.path, "rb")
-  if not handle then return {}, { missing = true } end
+  if not handle then
+    local wasReadingFile = self.position > 0
+    resetDecoding(self)
+    return {}, { missing = true, rotated = wasReadingFile }
+  end
   local status = {}
   local size = handle:seek("end")
-  if size < self.position then
+  handle:seek("set", 0)
+  local currentHead = handle:read(FILE_HEAD_LENGTH) or ""
+  if size < self.position or currentHead:sub(1, #self.fileHead) ~= self.fileHead then
     resetDecoding(self)
     status.rotated = true
   end
+  self.fileHead = currentHead
   handle:seek("set", self.position)
   local isAtFileStart = self.position == 0
   local chunk = handle:read("*a") or ""

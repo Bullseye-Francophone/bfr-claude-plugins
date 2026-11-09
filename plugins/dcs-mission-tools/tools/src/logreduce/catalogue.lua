@@ -54,8 +54,9 @@ end
 
 local function defaultFor(record)
   local severity = "info"
-  if record.level == "ERROR" then severity = "error"
-  elseif record.level == "WARNING" then severity = "warning" end
+  local baseLevel = record.level and record.level:gsub("_ONCE$", "")
+  if baseLevel == "ERROR" then severity = "error"
+  elseif baseLevel == "WARNING" then severity = "warning" end
   return {
     id = "generic", layer = "dcs-envelope", severity = severity,
     category = "uncategorized", hint = nil, noise = false,

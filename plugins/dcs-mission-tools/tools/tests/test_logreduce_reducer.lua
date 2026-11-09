@@ -104,3 +104,12 @@ feed(hookReducer, {
 local hookEvents = hookReducer:digest().events
 t.eq("reducer: two failing hooks stay two events", #hookEvents, 2)
 t.eq("reducer: hook failure keeps its full message", hookEvents[1].message, HOOK_ONE)
+
+local onceReducer = reducer.new({ threshold = "info" })
+feed(onceReducer, {
+  "2026-01-01 10:00:01.000 ERROR_ONCE DX11BACKEND (Main): shader failed once",
+  "2026-01-01 10:00:02.000 WARNING_ONCE DX11BACKEND (Main): texture warned once",
+})
+local onceCounts = onceReducer:digest().counts
+t.eq("reducer: ERROR_ONCE counts as error", onceCounts.error, 1)
+t.eq("reducer: WARNING_ONCE counts as warning", onceCounts.warning, 1)

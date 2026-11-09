@@ -1,6 +1,6 @@
 local M = {}
 
-local ENVELOPE = "^(%d%d%d%d%-%d%d%-%d%d %d%d:%d%d:%d%d%.%d+)%s+(%u+)%s+(%S+)%s+%((.-)%):%s?(.*)$"
+local ENVELOPE = "^(%d%d%d%d%-%d%d%-%d%d %d%d:%d%d:%d%d%.%d+)%s+([%u_]+)%s+(%S+)%s+%((.-)%):%s?(.*)$"
 local VEAF = "^([%u][%u ]*)|([IWEDT])|(.-):%s(.*)$"
 local LUAERR = '%[string "([^"]*)"%]:(%d+): (.*)'
 local STACK = '^%s+%[string "([^"]*)"%]:(%d+):'

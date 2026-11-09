@@ -65,3 +65,24 @@ t.eq("anonymize: ip next to a version is still replaced",
 local onceThresholdOutput = t.run(LOGMAIN .. "--once --threshold critical " .. FIX .. "/script-errors.log")
 local onceInfoOutput = t.run(LOGMAIN .. "--once --threshold info " .. FIX .. "/script-errors.log")
 t.eq("cli: --threshold changes the digest", onceThresholdOutput == onceInfoOutput, false)
+
+local function runOnceOnBytes(bytes)
+  local temporaryLogPath = os.tmpname()
+  local handle = assert(io.open(temporaryLogPath, "wb")); handle:write(bytes); handle:close()
+  local digest, failure = pipeline.runOnce(temporaryLogPath)
+  os.remove(temporaryLogPath)
+  return digest, failure
+end
+
+local binaryDigest, binaryFailure = runOnceOnBytes("PK\3\4\20\0\8\0\n\255\254\1\2\n\200\201\202\n")
+t.eq("cli: binary content yields no digest", binaryDigest, nil)
+t.contains("cli: binary content failure explains why", binaryFailure, "no DCS log line")
+
+local plainTextDigest = runOnceOnBytes("just some notes\nnothing about DCS\n")
+t.eq("cli: unrelated text yields no digest", plainTextDigest, nil)
+
+local partlyDamagedDigest = runOnceOnBytes("\1\2\3 garbage\n2026-06-30 18:20:02.000 ERROR   APP (Main): still a log\n")
+t.eq("cli: a damaged region does not reject a real log", partlyDamagedDigest.counts.error, 1)
+
+local _, miZCode = t.run(LOGMAIN .. "--once plugins/dcs-mission-tools/tools/tests/fixtures/broken-loading/Broken_Loading.miz")
+t.eq("cli: a .miz archive exits with code 3", miZCode, 3)
