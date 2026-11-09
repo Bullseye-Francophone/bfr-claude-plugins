@@ -1,7 +1,7 @@
 local t = require("helpers")
 local loader = require("lib.missionLoader")
 
-local tmp = os.tmpname()
+local tmp = t.tempPath()
 local f = io.open(tmp, "w")
 f:write('myTable = {\n    ["a"] = "hello",\n    [1] = 2,\n}\n')
 f:close()
@@ -29,3 +29,22 @@ t.eq("loader: sandbox blocks os access", sandboxed, nil)
 t.contains("loader: sandbox error mentions file", err4, "myTable")
 
 os.remove(tmp)
+
+local first = loader.tempPath("mizlint-test", ".json")
+local second = loader.tempPath("mizlint-test", ".json")
+t.check("loader: tempPath differs within a process", first ~= second)
+t.contains("loader: tempPath keeps the prefix", first, "/mizlint-test-")
+t.check("loader: tempPath keeps the suffix", first:sub(-5) == ".json")
+
+-- Two processes started in the same second used to get the same name (issue #41).
+local srcDir = (debug.getinfo(1, "S").source:match("^@(.*[/\\])") or "./") .. "../src/"
+local probeFile = loader.tempPath("mizlint-probe", ".lua")
+f = io.open(probeFile, "w")
+f:write("package.path = ", string.format("%q", srcDir .. "?.lua;"), " .. package.path\n",
+  'print(require("lib.missionLoader").tempPath("p"))\n')
+f:close()
+local probe = t.luaCommand() .. ' "' .. probeFile .. '"'
+local fromOne = t.run(probe):match("[^\r\n]+")
+local fromTwo = t.run(probe):match("[^\r\n]+")
+os.remove(probeFile)
+t.check("loader: tempPath differs across processes", fromOne ~= nil and fromOne ~= fromTwo, tostring(fromOne))

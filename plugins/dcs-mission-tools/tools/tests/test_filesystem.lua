@@ -1,10 +1,8 @@
 local t = require("helpers")
 local fs = require("lib.fileSystem")
 
-local tmp = os.tmpname()
-os.remove(tmp)
-local dir = tmp .. "_fsdir"
-os.execute('mkdir -p "' .. dir .. '/sub"')
+local dir = t.tempPath("_fsdir")
+t.makeDirs(dir .. "/sub")
 local f = io.open(dir .. "/a.txt", "w") f:write("hello") f:close()
 f = io.open(dir .. "/sub/b.lua", "w") f:write("x") f:close()
 
@@ -27,11 +25,20 @@ local dirContent, dirErr = fs.readAll(dir)
 t.eq("fs: readAll on directory returns nil", dirContent, nil)
 t.check("fs: readAll on directory returns an error message", type(dirErr) == "string")
 
-f = io.open(dir .. '/wei"rd.txt', "w") f:write("q") f:close()
-local foundQuoted = false
-for _, path in ipairs(fs.listFiles(dir)) do
-  if path:find('wei"rd.txt', 1, true) then foundQuoted = true end
+local quotesAllowedInFileNames = package.config:sub(1, 1) ~= "\\"
+if quotesAllowedInFileNames then
+  f = io.open(dir .. '/wei"rd.txt', "w") f:write("q") f:close()
+  local foundQuoted = false
+  for _, path in ipairs(fs.listFiles(dir)) do
+    if path:find('wei"rd.txt', 1, true) then foundQuoted = true end
+  end
+  t.check("fs: listFiles handles quotes in names", foundQuoted)
+else
+  t.skip("fs: listFiles handles quotes in names",
+    "Windows forbids '\"' in file names, so such a file cannot exist there")
 end
-t.check("fs: listFiles handles quotes in names", foundQuoted)
 
-os.execute('rm -rf "' .. dir .. '"')
+fs.removeTree(dir)
+t.eq("fs: removeTree deletes the whole tree", fs.exists(dir .. "/sub/b.lua") or fs.isDir(dir), false)
+fs.removeTree(dir)
+t.check("fs: removeTree on a missing dir is a no-op", not fs.isDir(dir))

@@ -136,7 +136,7 @@ tools\mizlint.cmd all <path> --checks-dir <extra-checks-dir>
 
 | Code | Severity | Description |
 |------|----------|-------------|
-| `NAME-ZONE-MISSING` | error | A trigger zone name referenced in scripts or triggers does not exist in the mission |
+| `NAME-ZONE-MISSING` | error | A trigger zone name referenced in scripts or triggers does not exist in the mission. A name declared on a `VeafCombatOperation` is exempt: an operation groups tasking orders and never resolves a trigger zone, so its name is only a registry key |
 | `NAME-GROUP-MISSING` | warning | A group name referenced in scripts is not present in the mission (may be spawned at runtime) |
 
 ---

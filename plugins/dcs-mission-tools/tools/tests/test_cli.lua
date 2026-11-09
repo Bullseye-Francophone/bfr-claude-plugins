@@ -1,15 +1,11 @@
 local t = require("helpers")
 
-local LUA = "plugins/dcs-mission-tools/tools/bin/lua-macos-arm64"
+local LUA = t.luaCommand()
 local MAIN = "plugins/dcs-mission-tools/tools/src/main.lua"
 local FIX = "plugins/dcs-mission-tools/tools/tests/fixtures"
 
 local function runCli(args)
-  local proc = io.popen(LUA .. " " .. MAIN .. " " .. args .. " 2>&1; echo EXIT:$?")
-  local output = proc:read("*a")
-  proc:close()
-  local code = tonumber(output:match("EXIT:(%d+)"))
-  return output, code
+  return t.run(LUA .. " " .. MAIN .. " " .. args)
 end
 
 local output, code = runCli("all " .. FIX .. "/clean")

@@ -4,6 +4,7 @@ DIR="$(cd "$(dirname "$0")" && pwd)"
 case "$(uname -s)-$(uname -m)" in
   Darwin-arm64)  BIN="$DIR/bin/lua-macos-arm64" ;;
   Linux-x86_64)  BIN="$DIR/bin/lua-linux-x64" ;;
+  MINGW*|MSYS*|CYGWIN*) BIN="$DIR/bin/windows-x64/lua54.exe" ;;
   *)             BIN="" ;;
 esac
 if [ -z "$BIN" ] || [ ! -x "$BIN" ]; then

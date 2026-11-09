@@ -3,10 +3,14 @@ local findingsLib = require("lib.findings")
 
 local M = { name = "names", layer = "mist" }
 
+local EDITOR_ZONE_NAME_PATTERN = ':setMissionEditorZoneName%(%s*"([^"]+)"'
+local OPERATION_CONSTRUCTOR_PATTERN = 'VeafCombatOperation%s*[:.]%s*new%s*%('
+local ANY_VEAF_CONSTRUCTOR_PATTERN = 'Veaf%w*%s*[:.]%s*new%s*%('
+
 local ZONE_PATTERNS = {
   'veafCombatZone%.ActivateZone%(\\?"([^"\\]+)\\?"',
   'veafCombatZone%.DesactivateZone%(\\?"([^"\\]+)\\?"',
-  ':setMissionEditorZoneName%(%s*"([^"]+)"',
+  EDITOR_ZONE_NAME_PATTERN,
   'mist%.DBs%.zonesByName%[%s*"([^"]+)"',
 }
 local GROUP_PATTERNS = {
@@ -21,6 +25,18 @@ local function collect(text, patterns, into)
   end
 end
 
+local function collectOperationZoneNames(text, into)
+  local searchFrom = 1
+  while true do
+    local _, constructorEnd = text:find(OPERATION_CONSTRUCTOR_PATTERN, searchFrom)
+    if not constructorEnd then return end
+    local nextConstructorStart = text:find(ANY_VEAF_CONSTRUCTOR_PATTERN, constructorEnd + 1)
+    local declarationChain = text:sub(constructorEnd + 1, (nextConstructorStart or #text + 1) - 1)
+    for name in declarationChain:gmatch(EDITOR_ZONE_NAME_PATTERN) do into[name] = true end
+    searchFrom = constructorEnd + 1
+  end
+end
+
 function M.run(project)
   local findings, add = findingsLib.collector(M.name)
 
@@ -32,9 +48,10 @@ function M.run(project)
   end
   local allText = table.concat(trigChunks, "\n") .. "\n" .. project.scriptText
 
-  local referencedZones, referencedGroups = {}, {}
+  local referencedZones, referencedGroups, operationNames = {}, {}, {}
   collect(allText, ZONE_PATTERNS, referencedZones)
   collect(allText, GROUP_PATTERNS, referencedGroups)
+  collectOperationZoneNames(allText, operationNames)
 
   local zones = model.zoneNames(project.mission)
   local groups = model.groupNames(project.mission)
@@ -43,7 +60,7 @@ function M.run(project)
   for name in pairs(referencedZones) do sortedZones[#sortedZones + 1] = name end
   table.sort(sortedZones)
   for _, name in ipairs(sortedZones) do
-    if not zones[name] then
+    if not zones[name] and not operationNames[name] then
       add("error", "NAME-ZONE-MISSING",
         "trigger zone '" .. name .. "' is referenced by scripts/triggers but does not exist in the mission")
     end

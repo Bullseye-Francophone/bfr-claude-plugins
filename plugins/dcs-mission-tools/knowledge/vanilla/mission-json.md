@@ -16,7 +16,7 @@ navigation entry points, **not an exhaustive whitelist** — see *Exhaustiveness
 ## Export
 
 ```sh
-"${CLAUDE_PLUGIN_ROOT}/tools/miz2json.sh" <mission-folder-or-.miz> > mission.json   # Windows: miz2json.cmd
+"${CLAUDE_PLUGIN_ROOT}/tools/miz2json.sh" <mission-folder-or-.miz> > mission.json   # Windows: miz2json.cmd, or miz2json.sh under Git-Bash
 ```
 
 - Input: a project folder (containing `src/mission/`), a `src/mission` folder, or a
@@ -25,6 +25,11 @@ navigation entry points, **not an exhaustive whitelist** — see *Exhaustiveness
   reuse the file for every query** — do not re-export per question.
 - `$VEAF_TOOLS` overrides the binary. Exit code `3` means no veaf-tools for this
   platform → drop to the raw-Lua fallback (bottom of this file).
+- Exit code `1` means the export failed: stderr then carries veaf-tools' exit code
+  and its own output (last 20 lines in `miz2json.sh`, `$MIZ2JSON_LOG_LINES` to
+  change; whole log in `miz2json.cmd`) — read it for the cause (bad path, Python
+  traceback, `[PYI-...:ERROR]` bootloader message) before retrying. On success
+  veaf-tools' banner is never shown and stdout holds only the JSON.
 - `--pretty` emits indented JSON (one value per line) for the no-jq grep fallback.
 
 ## The JSON contract (schemaVersion 2)

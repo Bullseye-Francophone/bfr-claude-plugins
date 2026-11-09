@@ -5,8 +5,12 @@ local helpers = require("helpers")
 
 for _, file in ipairs(arg) do
   io.write("== ", file, "\n")
-  dofile(file)
+  local completed, failure = pcall(dofile, file)
+  if not completed then
+    helpers.check(file .. ": test file ran to completion", false, tostring(failure))
+  end
 end
 
-io.write(string.format("\n%d passed, %d failed\n", helpers.passed, helpers.failed))
+local skippedNote = helpers.skipped > 0 and string.format(", %d skipped", helpers.skipped) or ""
+io.write(string.format("\n%d passed, %d failed%s\n", helpers.passed, helpers.failed, skippedNote))
 os.exit(helpers.failed == 0 and 0 or 1)

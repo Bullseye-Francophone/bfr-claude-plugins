@@ -50,10 +50,30 @@ local function quote(path)
   return '"' .. path:gsub('"', '\\"') .. '"'
 end
 
-local function tempJsonPath()
+-- A name tied to this process, so that two mizlint runs sharing TEMP and started
+-- in the same second never pick the same temp path (os.time() alone has a 1 s
+-- resolution and the serial restarts at 1 in every process). math.random is
+-- seeded per process by Lua 5.4 itself; on Windows, os.tmpname() (msvcrt
+-- tmpnam, e.g. "\s1k8.") also encodes the process id and creates no file. On
+-- POSIX os.tmpname() creates a file, so it is not used there.
+local processTag
+local function tempProcessTag()
+  if processTag then return processTag end
+  local pidPart = ""
+  if fs.isWindows then
+    local ok, name = pcall(os.tmpname)
+    if ok and name then pidPart = fs.basename(name):gsub("[^%w]", "") .. "-" end
+  end
+  processTag = pidPart .. string.format("%08x", math.random(0, 0x7fffffff))
+  return processTag
+end
+
+local tempSerial = 0
+function M.tempPath(prefix, suffix)
   local dir = os.getenv("TEMP") or os.getenv("TMP") or os.getenv("TMPDIR") or "/tmp"
-  M._counter = (M._counter or 0) + 1
-  return dir .. "/mizlint-export-" .. tostring(os.time()) .. "-" .. tostring(M._counter) .. ".json"
+  tempSerial = tempSerial + 1
+  return dir .. "/" .. prefix .. "-" .. tostring(os.time()) .. "-" .. tempProcessTag()
+    .. "-" .. tostring(tempSerial) .. (suffix or "")
 end
 
 local function succeeded(status)
@@ -128,7 +148,7 @@ function M.exportTables(input, extractDir)
   local bin = M.resolveVeafTools()
   if not bin then return nil, "veaf-tools not found (set VEAF_TOOLS or add it to PATH)" end
 
-  local outFile = tempJsonPath()
+  local outFile = M.tempPath("mizlint-export", ".json")
   local args = {
     quote(bin), "export", quote(input), quote(outFile),
     "--format", "json", "--compact", "--no-pause",
