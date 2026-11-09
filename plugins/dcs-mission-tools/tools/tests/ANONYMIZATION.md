@@ -14,9 +14,10 @@
 `anonymize.scrub(text)` performs a reproducible, format-preserving
 substitution pass and automates only the following four transforms:
 
-- Windows user directories: `C:\Users\<user>\...` → `C:\Users\PLAYER`
-- Saved Games instance paths: `Saved Games\<instance>` → `Saved Games\INSTANCE`
-- IPv4 addresses → `0.0.0.0`
+- Windows user directories: `C:\Users\<user>\...` → `C:\Users\PLAYER` (with `\` or `/` separators)
+- Saved Games instance paths: `Saved Games\<instance>` → `Saved Games\INSTANCE` (with `\` or `/` separators)
+- IPv4 addresses → `0.0.0.0`, except version numbers: a component above 255,
+  or a value right after `name/`, `v` or `version`, is left as is
 - 32-hex-character UCIDs → 32 zero digits
 
 **NOT automatically redacted** — contributor must hand-review and manually remove:
