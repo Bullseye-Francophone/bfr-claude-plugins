@@ -4,9 +4,6 @@ package.path = here .. "?.lua;" .. package.path
 local fs = require("lib.fileSystem")
 local json = require("lib.json")
 local pipeline = require("logreduce.pipeline")
-local parser = require("logreduce.parser")
-local reducer = require("logreduce.reducer")
-local follow = require("logreduce.follow")
 
 local USAGE = [[
 logreduce — reduce a DCS dcs.log to a structured JSON digest
@@ -45,20 +42,21 @@ if not VALID_THRESHOLDS[options.threshold] then
 end
 
 local function sleep(seconds)
-  if fs.isWindows then os.execute("ping -n " .. (seconds + 1) .. " 127.0.0.1 >nul")
-  else os.execute("sleep " .. seconds) end
+  local completed
+  if fs.isWindows then completed = os.execute("ping -n " .. (seconds + 1) .. " 127.0.0.1 >nul")
+  else completed = os.execute("sleep " .. seconds) end
+  return completed == true
 end
 
 if options.follow then
-  local f = follow.new(path)
-  local r = reducer.new(options)
-  while true do
-    for _, line in ipairs(f:poll()) do
-      local emitted = r:add(parser.parseLine(line))
-      if emitted then io.write(json.encode(emitted), "\n"); io.flush() end
-    end
-    sleep(1)
-  end
+  local session = pipeline.newFollowSession(path, options,
+    function(event) io.write(json.encode(event), "\n"); io.flush() end,
+    function(notice) io.stderr:write("logreduce: ", notice, "\n") end)
+  repeat
+    local isRunning, failure = session.tick()
+    if not isRunning then fail(failure) end
+  until not sleep(1)
+  session.finish()
 else
   local digest, err = pipeline.runOnce(path, options)
   if not digest then fail(err) end

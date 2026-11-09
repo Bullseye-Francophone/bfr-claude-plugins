@@ -4,6 +4,12 @@ local function hasNonNull(bytes)
   return bytes:find("[^%z]") ~= nil
 end
 
+M.ALL_NULL_MESSAGE = "empty or corrupt (all-null content)"
+
+function M.isAllNull(bytes)
+  return not hasNonNull(bytes)
+end
+
 local UTF8_BOM = "\239\187\191"
 local UTF16_LITTLE_ENDIAN_BOM = "\255\254"
 local UTF16_BIG_ENDIAN_BOM = "\254\255"
@@ -63,8 +69,8 @@ function M.normalizeLine(line)
 end
 
 function M.toText(bytes)
-  if not hasNonNull(bytes) then
-    return nil, "empty or corrupt (all-null content)"
+  if M.isAllNull(bytes) then
+    return nil, M.ALL_NULL_MESSAGE
   end
   local encoding, bomLength = M.detectEncoding(bytes)
   local body = bytes:sub(bomLength + 1)

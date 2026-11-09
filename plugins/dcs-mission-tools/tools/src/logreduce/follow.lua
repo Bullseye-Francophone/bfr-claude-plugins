@@ -45,13 +45,23 @@ end
 
 function Follower:poll()
   local handle = io.open(self.path, "rb")
-  if not handle then return {} end
+  if not handle then return {}, { missing = true } end
+  local status = {}
   local size = handle:seek("end")
-  if size < self.position then resetDecoding(self) end
+  if size < self.position then
+    resetDecoding(self)
+    status.rotated = true
+  end
   handle:seek("set", self.position)
+  local isAtFileStart = self.position == 0
   local chunk = handle:read("*a") or ""
   self.position = handle:seek("cur")
   handle:close()
+
+  if isAtFileStart and chunk ~= "" and decode.isAllNull(chunk) then
+    status.corrupt = decode.ALL_NULL_MESSAGE
+    return {}, status
+  end
 
   self.undecodedBytes = self.undecodedBytes .. chunk
   self.lineBuffer = self.lineBuffer .. self:decodeAvailableBytes()
@@ -64,7 +74,7 @@ function Follower:poll()
     if line ~= "" then lines[#lines + 1] = decode.normalizeLine(line) end
     self.lineBuffer = self.lineBuffer:sub(newlineIndex + 1)
   end
-  return lines
+  return lines, status
 end
 
 return M

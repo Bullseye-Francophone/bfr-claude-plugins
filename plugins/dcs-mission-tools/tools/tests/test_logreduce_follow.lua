@@ -46,3 +46,72 @@ write("wb", "z\n")
 t.eq("follow: rotation to plain text re-detects the encoding", rotatedFollower:poll(), { "z" })
 
 os.remove(path)
+
+local pipeline = require("logreduce.pipeline")
+
+local FOLLOW_ERROR = '2026-06-30 21:04:58.720 ERROR   Lua::Config (Main): Call error [string "a.lua"]:10: boom\n'
+local FOLLOW_FRAME = '\t[string "a.lua"]:20: in function \'run\'\n'
+local FOLLOW_OTHER_ERROR = "2026-06-30 21:05:00.000 ERROR   APP (Main): another failure\n"
+local sessionPath = os.tmpname()
+
+local function writeSession(mode, data)
+  local handle = assert(io.open(sessionPath, mode)); handle:write(data); handle:close()
+end
+
+local function newRecordingSession()
+  local recording = { events = {}, notices = {} }
+  recording.session = pipeline.newFollowSession(sessionPath, {},
+    function(event) recording.events[#recording.events + 1] = event end,
+    function(notice) recording.notices[#recording.notices + 1] = notice end)
+  return recording
+end
+
+writeSession("wb", FOLLOW_ERROR .. FOLLOW_FRAME .. FOLLOW_OTHER_ERROR)
+local stackRecording = newRecordingSession()
+stackRecording.session.tick()
+t.eq("follow session: event is emitted once a non-frame line arrives", #stackRecording.events, 1)
+t.eq("follow session: emitted event carries its stack", #stackRecording.events[1].stack, 1)
+stackRecording.session.tick()
+t.eq("follow session: last event is emitted on the next idle poll", #stackRecording.events, 2)
+
+writeSession("wb", FOLLOW_ERROR)
+local splitRecording = newRecordingSession()
+splitRecording.session.tick()
+t.eq("follow session: event waits for frames of the next poll", #splitRecording.events, 0)
+writeSession("ab", FOLLOW_FRAME)
+splitRecording.session.tick()
+splitRecording.session.tick()
+t.eq("follow session: frames across polls reach the event", #splitRecording.events[1].stack, 1)
+
+writeSession("wb", FOLLOW_ERROR .. FOLLOW_OTHER_ERROR)
+local rotationRecording = newRecordingSession()
+rotationRecording.session.tick()
+rotationRecording.session.tick()
+t.eq("follow session: two events before rotation", #rotationRecording.events, 2)
+writeSession("wb", FOLLOW_ERROR)
+rotationRecording.session.tick()
+rotationRecording.session.tick()
+t.eq("follow session: known error is emitted again after rotation", #rotationRecording.events, 3)
+
+writeSession("wb", FOLLOW_ERROR)
+local finishRecording = newRecordingSession()
+finishRecording.session.tick()
+finishRecording.session.finish()
+t.eq("follow session: finish emits the pending event", #finishRecording.events, 1)
+
+writeSession("wb", string.rep("\0", 32))
+local corruptRecording = newRecordingSession()
+local corruptOk, corruptFailure = corruptRecording.session.tick()
+t.eq("follow session: all-null file stops the session", corruptOk, nil)
+t.contains("follow session: all-null failure explains why", corruptFailure, "all-null")
+
+writeSession("wb", "")
+local emptyRecording = newRecordingSession()
+t.eq("follow session: empty file keeps waiting", emptyRecording.session.tick(), true)
+
+os.remove(sessionPath)
+local missingRecording = newRecordingSession()
+t.eq("follow session: missing file keeps waiting", missingRecording.session.tick(), true)
+missingRecording.session.tick()
+t.eq("follow session: missing file is announced once", #missingRecording.notices, 1)
+t.contains("follow session: notice names the file", missingRecording.notices[1], sessionPath)

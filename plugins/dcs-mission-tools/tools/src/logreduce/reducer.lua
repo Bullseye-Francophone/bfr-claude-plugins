@@ -7,6 +7,9 @@ Reducer.__index = Reducer
 local RANK = { critical = 1, error = 2, warning = 3, info = 4, noise = 5 }
 
 local function groupKey(record, class)
+  if class.keep_full_message then
+    return table.concat({ class.category, record.message }, "|")
+  end
   if record.luaerror then
     return table.concat({ class.category, record.luaerror.file, record.luaerror.line }, "|")
   end
@@ -26,13 +29,14 @@ end
 
 function Reducer:add(record)
   if record.kind == "stack" then
-    if self.lastEvent then
-      self.lastEvent.stack = self.lastEvent.stack or {}
-      self.lastEvent.stack[#self.lastEvent.stack + 1] = record.raw
+    if self.stackOwner then
+      self.stackOwner.stack = self.stackOwner.stack or {}
+      self.stackOwner.stack[#self.stackOwner.stack + 1] = record.raw
     end
     return nil
   end
   if record.kind == "session" then
+    self.stackOwner = nil
     self.session[record.event] = true
     return nil
   end
@@ -63,6 +67,7 @@ function Reducer:add(record)
       self.noiseOrder[#self.noiseOrder + 1] = group
     end
     group.count = group.count + 1
+    self.stackOwner = nil
     return nil
   end
 
@@ -73,14 +78,14 @@ function Reducer:add(record)
     group = {
       severity = class.severity, category = class.category, id = class.id,
       count = 0, first_ts = record.ts, last_ts = record.ts,
-      message = record.luaerror and record.luaerror.message or record.message,
+      message = (not class.keep_full_message and record.luaerror and record.luaerror.message) or record.message,
       source_file = record.luaerror and record.luaerror.file or nil,
       line = record.luaerror and record.luaerror.line or nil,
     }
     self.groups[key] = group
     self.order[#self.order + 1] = group
-    self.lastEvent = group
   end
+  self.stackOwner = isNew and group or nil
   group.count = group.count + 1
   group.last_ts = record.ts
 
@@ -91,7 +96,9 @@ end
 function Reducer:digest()
   if not self.session.role then self.session.role = "unknown" end
   local events = {}
-  for _, group in ipairs(self.order) do events[#events + 1] = group end
+  for _, group in ipairs(self.order) do
+    if RANK[group.severity] <= self.threshold then events[#events + 1] = group end
+  end
   table.sort(events, function(a, b)
     if a.severity ~= b.severity then return RANK[a.severity] < RANK[b.severity] end
     return a.count > b.count

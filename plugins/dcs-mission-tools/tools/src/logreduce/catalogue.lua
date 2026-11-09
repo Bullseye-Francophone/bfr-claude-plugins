@@ -24,6 +24,7 @@ M.entries = {
   {
     id = "hook-load-failure", layer = "hook", severity = "critical",
     category = "hook-load", noise = false, hint = "A Hooks script failed to load; the feature it provides is off.",
+    keep_full_message = true,
     when = { subsystem = "APP", message = "Failed to load .*Hooks" },
   },
   {
@@ -68,6 +69,7 @@ function M.classify(record)
       return {
         id = entry.id, layer = entry.layer, severity = entry.severity,
         category = entry.category, hint = entry.hint, noise = entry.noise,
+        keep_full_message = entry.keep_full_message,
       }
     end
   end
