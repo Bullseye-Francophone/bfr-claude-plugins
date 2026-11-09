@@ -12,10 +12,10 @@ local USAGE = [[
 logreduce — reduce a DCS dcs.log to a structured JSON digest
 
 Usage:
-  logreduce <logfile> [--threshold critical|error|warning|info]
+  logreduce [--once] <logfile> [--threshold critical|error|warning|info]
   logreduce <logfile> --follow [--threshold ...]
 
-Default mode prints one JSON digest. --follow prints one JSON event per line.
+--once (the default) prints one JSON digest. --follow prints one JSON event per line.
 Exit codes: 0 ok, 3 execution failure.
 ]]
 
@@ -28,10 +28,13 @@ local options = { positional = {}, threshold = "warning" }
 local i = 1
 while i <= #arg do
   if arg[i] == "--follow" then options.follow = true
+  elseif arg[i] == "--once" then options.once = true
   elseif arg[i] == "--threshold" then i = i + 1; options.threshold = arg[i] or fail("--threshold needs a value")
   else options.positional[#options.positional + 1] = arg[i] end
   i = i + 1
 end
+
+if options.once and options.follow then fail("--once and --follow are mutually exclusive") end
 
 local path = options.positional[1]
 if not path or path == "help" then io.write(USAGE); os.exit(path and 0 or 3) end

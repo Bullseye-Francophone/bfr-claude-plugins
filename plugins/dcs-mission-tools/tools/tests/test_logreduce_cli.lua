@@ -19,10 +19,18 @@ local digest, err = pipeline.runOnce(FIX .. "/corrupt-null.log")
 t.eq("cli: corrupt-null digest is nil", digest, nil)
 t.contains("cli: corrupt-null error explains", err, "all-null")
 
-local ok, kind, code = os.execute(
-  "./plugins/dcs-mission-tools/tools/logreduce.sh " .. FIX .. "/clean.log --threshold zzz 2>/dev/null"
-)
-t.eq("cli: invalid --threshold exits with code 3", code, 3)
+local LOGMAIN = t.luaCommand() .. " plugins/dcs-mission-tools/tools/src/logmain.lua "
+
+local _, invalidThresholdCode = t.run(LOGMAIN .. FIX .. "/clean.log --threshold zzz")
+t.eq("cli: invalid --threshold exits with code 3", invalidThresholdCode, 3)
+
+local onceOutput, onceCode = t.run(LOGMAIN .. "--once " .. FIX .. "/clean.log")
+local defaultOutput = t.run(LOGMAIN .. FIX .. "/clean.log")
+t.eq("cli: --once exits 0", onceCode, 0)
+t.eq("cli: --once prints the same digest as the default mode", onceOutput, defaultOutput)
+
+local _, exclusiveModesCode = t.run(LOGMAIN .. "--once --follow " .. FIX .. "/clean.log")
+t.eq("cli: --once with --follow exits with code 3", exclusiveModesCode, 3)
 
 local anonymize = require("anonymize")
 
