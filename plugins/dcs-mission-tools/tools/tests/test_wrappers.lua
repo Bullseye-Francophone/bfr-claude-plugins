@@ -30,7 +30,7 @@ end
 
 shell('mkdir -p "' .. sandbox .. '/bin/windows-x64" "' .. sandbox .. '/bin/macos-arm64" "' ..
   sandbox .. '/bin/linux-x64" "' .. sandbox .. '/stubPath"')
-shell('cp "' .. TOOLS_DIR .. '/miz2json.sh" "' .. TOOLS_DIR .. '/mizlint.sh" "' .. sandbox .. '/"')
+shell('cp "' .. TOOLS_DIR .. '/miz2json.sh" "' .. TOOLS_DIR .. '/mizlint.sh" "' .. TOOLS_DIR .. '/logreduce.sh" "' .. sandbox .. '/"')
 
 writeExecutable(sandbox .. "/stubPath/uname", [[#!/bin/sh
 case "$1" in
@@ -91,6 +91,19 @@ t.contains("wrappers: mizlint.sh picks the bundled Windows interpreter under Git
 local macLint, macLintCode = lintedPlatform("Darwin", "arm64")
 t.eq("wrappers: mizlint.sh still succeeds on macOS arm64", macLintCode, 0)
 t.contains("wrappers: mizlint.sh still picks the macOS interpreter", macLint, "interpretedBy macos-arm64")
+
+local function reducedPlatform(system, machine)
+  return shell(withPlatform(system, machine, 'sh "' .. sandbox .. '/logreduce.sh" help'))
+end
+
+local gitBashReduce, gitBashReduceCode = reducedPlatform("MINGW64_NT-10.0-26200", "x86_64")
+t.eq("wrappers: logreduce.sh succeeds under Git-Bash", gitBashReduceCode, 0)
+t.contains("wrappers: logreduce.sh picks the bundled Windows interpreter under Git-Bash",
+  gitBashReduce, "interpretedBy windows-x64")
+
+local macReduce, macReduceCode = reducedPlatform("Darwin", "arm64")
+t.eq("wrappers: logreduce.sh still succeeds on macOS arm64", macReduceCode, 0)
+t.contains("wrappers: logreduce.sh still picks the macOS interpreter", macReduce, "interpretedBy macos-arm64")
 
 local function exportWith(tool, arguments)
   return shell('env VEAF_TOOLS="' .. sandbox .. '/' .. tool .. '" ' ..
